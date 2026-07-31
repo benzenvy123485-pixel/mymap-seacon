@@ -3,253 +3,320 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>ซีคอนสแควร์ — แผนผังร้านค้า</title>
+<title>MyScape · ชั้น 1 My Pulse — ตัวอย่างระบบ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@200;300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ==================================================================
-   ซีคอนสแควร์ — ตู้ประชาสัมพันธ์ จอแนวตั้ง 9:16
-   ธีมหรู ถ่านอมน้ำตาล ตัดทองแชมเปญ
+   MyScape — ตู้ประชาสัมพันธ์ จอแนวตั้ง 9:16 ทัชสกรีน
+   ชั้น 1 · My Pulse
    ------------------------------------------------------------------
-   ครึ่งบน  แผนผัง 3 มิติ เรนเดอร์เองบน canvas 2 มิติ ไม่มี dependency
-   ครึ่งล่าง ตารางโมโนแกรมร้านค้า จิ้มแล้วกล้องบินไปหาร้านนั้น
+   ครึ่งบน   แผนผัง 3 มิติ เรนเดอร์เองบน canvas 2 มิติ ไม่มี dependency
+   ครึ่งล่าง ค้นหา + ตารางร้าน จิ้มแล้วกล้องบินไปหาร้านนั้น
+
+   สีทั้งงานถอดมาจากเด็ค MyScape เอง
+   ก้อนร้านในภาพ 3 มิติใช้สีเดียวกับกล่องยูนิตในผังสถาปนิก
+   เพื่อให้คนโยงภาพ 3 มิติกลับไปหาผังที่เขาเคยเห็นได้
    ================================================================== */
 :root{
   --u: min(1vw, 0.5625dvh);
-  /* ใช้ Prompt ทั้งงาน สร้างลำดับความสำคัญด้วยน้ำหนักและระยะห่างตัวอักษรแทนการสลับฟอนต์ */
+  /* Prompt ทั้งงาน สร้างลำดับความสำคัญด้วยน้ำหนักและระยะห่างตัวอักษร ไม่สลับฟอนต์ */
   --f-display:"Prompt","Noto Sans Thai",system-ui,sans-serif;
   --f-body:"Prompt","Noto Sans Thai",system-ui,sans-serif;
 
-  /* โทนขาว–เงิน แก้สีทั้งงานได้ที่นี่จุดเดียว */
-  --sheet-0:#FBFBFA;
-  --sheet-1:#F1F1EF;
-  --sheet-2:#FFFFFF;
-  --sheet-3:#E9EAEC;
-  --sil-1:#C9CDD3;
-  --sil-2:#9AA1AA;
-  --sil-3:#6B727B;
-  --ink:#20242A;
-  --ink-soft:rgba(32,36,42,.58);
-  --hair:rgba(32,36,42,.13);
+  /* ---- โทนสี MyScape · แก้ทั้งงานได้ที่นี่จุดเดียว ---- */
+  --paper:#EDE9DA;        /* กระดาษครีมของเด็ค */
+  --paper-2:#F7F4EA;      /* การ์ดที่ลอยขึ้นมา */
+  --paper-3:#E3DFCE;      /* ร่องและพื้นหลังช่องค้นหา */
+  --plate:#DCD8C7;        /* พื้นชั้นในภาพ 3 มิติ */
+  --walk:#E9E5D6;         /* ทางเดิน */
+  --unit:#F2DEB6;         /* สีกล่องยูนิตในผังสถาปนิก */
+  --sage:#C6D5C9;         /* พื้นที่สีเขียวในผัง */
+  --clay:#C0703F;         /* เทอร์ราคอตต้าของโลโก้ MyScape — ใช้ที่เดียวคือจุดที่คุณอยู่ */
+  --olive:#93937A;        /* ตัวอักษรรอง */
+  --ink:#23231F;
+  --ink-soft:rgba(35,35,31,.56);
+  --hair:rgba(35,35,31,.14);
   --slow:cubic-bezier(.22,.7,.2,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:#DEDEDC}
+html,body{height:100%;overflow:hidden;background:#D6D2C2}
 body{
   font-family:var(--f-body);font-weight:300;color:var(--ink);
-  display:grid;place-items:center;-webkit-user-select:none;user-select:none;
+  -webkit-font-smoothing:antialiased;
 }
-button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-
 .stage{
-  position:relative;overflow:hidden;
-  width:min(100vw, calc(100dvh * 9 / 16));
-  height:min(100dvh, calc(100vw * 16 / 9));
-  background:
-    radial-gradient(76% 42% at 50% 20%, #FFFFFF 0%, transparent 66%),
-    linear-gradient(180deg, var(--sheet-0) 0%, var(--sheet-1) 62%);
-}
-.stage::after{
-  content:"";position:absolute;inset:0;pointer-events:none;z-index:40;
-  box-shadow:inset 0 0 calc(var(--u)*24) calc(var(--u)*7) rgba(32,36,42,.07);
+  position:relative;width:100vw;height:100dvh;
+  max-width:calc(100dvh*9/16);margin:0 auto;
+  background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
 }
 
 /* ---------- หัวจอ ---------- */
-.head{
-  position:absolute;top:0;left:0;right:0;height:calc(var(--u)*14);z-index:12;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-bottom:1px solid var(--hair);
+.head{padding:calc(var(--u)*5) calc(var(--u)*5.5) calc(var(--u)*2.5)}
+.topline{display:flex;align-items:center;gap:calc(var(--u)*2.2);flex-wrap:wrap}
+.badge{
+  border:1px solid var(--clay);color:var(--clay);border-radius:999px;
+  padding:calc(var(--u)*.7) calc(var(--u)*2);font-size:calc(var(--u)*1.9);
+  letter-spacing:.1em;white-space:nowrap;
 }
-.head .mark{
-  font-family:var(--f-display);font-weight:300;
-  font-size:calc(var(--u)*3.9);letter-spacing:.46em;text-indent:.46em;
-  color:var(--ink);
+.eyebrow{
+  font-size:calc(var(--u)*2.1);font-weight:300;letter-spacing:.42em;
+  text-transform:uppercase;color:var(--olive);
 }
-.head .sub{
-  font-size:calc(var(--u)*2.5);letter-spacing:.3em;text-indent:.3em;
-  color:var(--ink-soft);margin-top:calc(var(--u)*.9);font-weight:200;
+.zone{
+  display:flex;align-items:baseline;gap:calc(var(--u)*2.6);
+  margin-top:calc(var(--u)*1.2);
+}
+.zone .lvl{
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*4.4);
+  color:var(--clay);letter-spacing:.06em;
+}
+.zone h1{
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*8.4);
+  letter-spacing:-.005em;line-height:1;
+}
+.zone h1 b{font-weight:500}
+.tag{
+  margin-top:calc(var(--u)*1.4);font-size:calc(var(--u)*2.9);
+  color:var(--ink-soft);font-weight:300;
+}
+.note{
+  margin-top:calc(var(--u)*.8);font-size:calc(var(--u)*2.05);
+  color:var(--olive);font-weight:300;
 }
 
 /* ---------- แผนผัง ---------- */
-#view{
-  position:absolute;top:calc(var(--u)*14);left:0;
-  width:100%;height:calc(var(--u)*78);display:block;z-index:1;
-}
-.maptag{
-  position:absolute;top:calc(var(--u)*17.5);left:calc(var(--u)*5);z-index:6;
-  font-size:calc(var(--u)*2.4);letter-spacing:.26em;color:var(--ink-soft);font-weight:200;
-  pointer-events:none;
-}
+.mapwrap{position:relative;flex:0 0 auto;height:41dvh}
+#view{width:100%;height:100%;display:block;touch-action:none}
 .tools{
-  position:absolute;top:calc(var(--u)*17);right:calc(var(--u)*5);z-index:6;
+  position:absolute;right:calc(var(--u)*3.5);bottom:calc(var(--u)*3.5);
   display:flex;flex-direction:column;gap:calc(var(--u)*1.6);
 }
 .tool{
-  width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);border-radius:50%;
-  display:grid;place-items:center;font-size:calc(var(--u)*3.4);
-  border:1px solid var(--hair);color:var(--sil-2);
-  background:rgba(255,255,255,.72);backdrop-filter:blur(4px);
-  transition:.3s var(--slow);
+  width:calc(var(--u)*8);height:calc(var(--u)*8);border-radius:50%;
+  border:1px solid var(--hair);background:rgba(247,244,234,.86);
+  color:var(--ink);font-size:calc(var(--u)*3.6);font-family:var(--f-display);
+  font-weight:300;cursor:pointer;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s var(--slow);
 }
-.tool:active{background:var(--ink);color:#fff}
+.tool:active{background:var(--paper-3)}
+.hint{
+  position:absolute;left:calc(var(--u)*4);bottom:calc(var(--u)*4);
+  font-size:calc(var(--u)*2.2);color:var(--olive);letter-spacing:.16em;
+  transition:opacity .6s var(--slow);
+}
+.hint.gone{opacity:0}
 
-/* ---------- แถบหมวดหมู่ ---------- */
+/* ---------- แถบชั้น ---------- */
+.floors{
+  display:flex;gap:calc(var(--u)*1.4);
+  padding:calc(var(--u)*2.4) calc(var(--u)*5) calc(var(--u)*2);
+}
+.fl{
+  flex:1;border:1px solid var(--hair);background:transparent;border-radius:calc(var(--u)*1.4);
+  padding:calc(var(--u)*1.6) 0 calc(var(--u)*1.5);cursor:pointer;
+  font-family:var(--f-body);color:var(--ink-soft);text-align:center;
+  transition:all .25s var(--slow);
+}
+.fl .n{
+  display:block;font-family:var(--f-display);font-weight:300;
+  font-size:calc(var(--u)*2.3);letter-spacing:.2em;color:var(--olive);
+}
+.fl .z{display:block;font-size:calc(var(--u)*2.6);font-weight:400;margin-top:calc(var(--u)*.5)}
+.fl.on{background:var(--ink);border-color:var(--ink)}
+.fl.on .n{color:rgba(247,244,234,.6)}
+.fl.on .z{color:var(--paper-2)}
+.fl.off{opacity:.42;cursor:default}
+
+/* ---------- ค้นหา + กรอง ---------- */
+.find{padding:0 calc(var(--u)*5) calc(var(--u)*2)}
+.searchbox{
+  display:flex;align-items:center;gap:calc(var(--u)*2);
+  background:var(--paper-3);border-radius:calc(var(--u)*1.6);
+  padding:calc(var(--u)*2.1) calc(var(--u)*2.8);
+}
+.searchbox svg{flex:0 0 auto;opacity:.5}
+#q{
+  flex:1;border:0;background:transparent;outline:none;
+  font-family:var(--f-body);font-weight:300;font-size:calc(var(--u)*3.1);color:var(--ink);
+}
+#q::placeholder{color:var(--olive)}
+.qclear{
+  border:0;background:transparent;color:var(--olive);cursor:pointer;
+  font-size:calc(var(--u)*3.4);line-height:1;display:none;
+}
+.qclear.on{display:block}
 .cats{
-  position:absolute;top:calc(var(--u)*92);left:0;right:0;z-index:10;
-  display:flex;gap:calc(var(--u)*2);overflow-x:auto;scrollbar-width:none;
-  padding:0 calc(var(--u)*5);
+  display:flex;gap:calc(var(--u)*1.5);overflow-x:auto;
+  padding:calc(var(--u)*2) calc(var(--u)*5) calc(var(--u)*1);
+  scrollbar-width:none;
 }
 .cats::-webkit-scrollbar{display:none}
-.cats::before,.cats::after{content:"";flex:none;width:0}
-.ct{
-  flex:none;text-align:center;padding:calc(var(--u)*1.4) calc(var(--u)*3.4) calc(var(--u)*2);
-  border-bottom:calc(var(--u)*.35) solid transparent;
-  font-size:calc(var(--u)*3.1);color:var(--ink-soft);white-space:nowrap;
-  transition:.35s var(--slow);font-weight:300;
+.cat{
+  flex:0 0 auto;border:1px solid var(--hair);background:transparent;
+  border-radius:999px;padding:calc(var(--u)*1.3) calc(var(--u)*3);
+  font-family:var(--f-body);font-weight:300;font-size:calc(var(--u)*2.6);
+  color:var(--ink-soft);cursor:pointer;transition:all .22s var(--slow);white-space:nowrap;
 }
-.ct b{display:block;font-size:calc(var(--u)*2.2);font-weight:200;opacity:.6;margin-top:calc(var(--u)*.4);letter-spacing:.1em}
-.ct.on{color:var(--ink);border-bottom-color:var(--ink)}
-.ct.soon{opacity:.34}
+.cat.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);font-weight:400}
 
-.hairline{position:absolute;top:calc(var(--u)*103.4);left:calc(var(--u)*5);right:calc(var(--u)*5);
-  height:1px;background:var(--hair);z-index:9}
-
-/* ---------- ชิปหมวดย่อย ---------- */
-.subs{
-  position:absolute;top:calc(var(--u)*106);left:0;right:0;z-index:10;
-  display:flex;gap:calc(var(--u)*2);overflow-x:auto;scrollbar-width:none;
-  padding:0 calc(var(--u)*5);
-}
-.subs::-webkit-scrollbar{display:none}
-.sb{
-  flex:none;padding:calc(var(--u)*1.4) calc(var(--u)*3.2);border-radius:999px;
-  border:1px solid var(--hair);font-size:calc(var(--u)*2.8);color:var(--ink-soft);
-  white-space:nowrap;transition:.3s var(--slow);font-weight:300;
-}
-.sb.on{border-color:var(--ink);color:var(--ink);background:rgba(32,36,42,.06)}
-
-/* ---------- ตารางโมโนแกรม ---------- */
+/* ---------- ตารางร้าน ---------- */
 .grid{
-  position:absolute;top:calc(var(--u)*115);left:0;right:0;bottom:0;z-index:8;
-  overflow-y:auto;scrollbar-width:none;
-  padding:calc(var(--u)*2) calc(var(--u)*5) calc(var(--u)*8);
-  display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.6);
-  align-content:start;
+  flex:1;overflow-y:auto;overscroll-behavior:contain;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:calc(var(--u)*2);padding:calc(var(--u)*1.5) calc(var(--u)*5) calc(var(--u)*5);
+  scrollbar-width:none;
 }
 .grid::-webkit-scrollbar{display:none}
 .card{
-  position:relative;aspect-ratio:1/1.06;border-radius:calc(var(--u)*1.4);
-  border:1px solid var(--hair);
-  background:linear-gradient(168deg, var(--sheet-2), #F3F4F5 78%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:calc(var(--u)*1.6);overflow:hidden;
-  transition:.4s var(--slow);
+  background:var(--paper-2);border:1px solid var(--hair);
+  border-radius:calc(var(--u)*1.6);padding:calc(var(--u)*1.8) calc(var(--u)*1) calc(var(--u)*1.5);
+  cursor:pointer;text-align:center;transition:all .22s var(--slow);
 }
-/* กรอบเส้นคู่แบบตราสัญลักษณ์ */
-.card::before{
-  content:"";position:absolute;inset:calc(var(--u)*1.5);
-  border:1px solid rgba(32,36,42,.1);border-radius:calc(var(--u)*.6);
-  transition:.4s var(--slow);
+.card:active{transform:scale(.965)}
+.card.on{background:var(--ink);border-color:var(--ink)}
+/* กรอบโมโนแกรม — ออกแบบให้วางโลโก้จริงแทนตัวอักษรได้เลยเมื่อของมา */
+.mono{
+  width:calc(var(--u)*9);height:calc(var(--u)*9);margin:0 auto;
+  border-radius:calc(var(--u)*1.2);background:var(--paper-3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*3.2);
+  letter-spacing:.05em;color:var(--ink);
 }
-.card .mono{
-  font-family:var(--f-display);font-weight:200;
-  font-size:calc(var(--u)*6.4);line-height:1;letter-spacing:.12em;
-  color:var(--sil-3);transition:.4s var(--slow);
+.card.on .mono{background:rgba(247,244,234,.14);color:var(--paper-2)}
+.cname{
+  margin-top:calc(var(--u)*1.3);font-size:calc(var(--u)*2.25);font-weight:400;
+  line-height:1.3;height:calc(var(--u)*5.9);overflow:hidden;
 }
-.card .rule{width:calc(var(--u)*5);height:1px;background:var(--sil-2);margin:calc(var(--u)*1.6) 0}
-.card .nm{
-  font-size:calc(var(--u)*2.3);line-height:1.35;text-align:center;color:var(--ink-soft);
-  font-weight:300;padding:0 calc(var(--u)*.6);
+.card.on .cname{color:var(--paper-2)}
+.cunit{
+  margin-top:calc(var(--u)*.5);font-size:calc(var(--u)*1.9);
+  color:var(--olive);letter-spacing:.1em;
 }
-.card.on{
-  border-color:var(--ink);
-  background:linear-gradient(168deg, #2E3339, #1C2025 82%);
+.card.on .cunit{color:rgba(247,244,234,.55)}
+.empty{
+  grid-column:1/-1;text-align:center;color:var(--olive);
+  font-size:calc(var(--u)*2.8);padding:calc(var(--u)*7) 0;line-height:1.7;
 }
-.card.on::before{inset:calc(var(--u)*1.1);border-color:rgba(255,255,255,.34)}
-.card.on .mono{color:#FFFFFF}
-.card.on .nm{color:rgba(255,255,255,.82)}
-.card:active{transform:scale(.97)}
 
-/* ---------- แผงรายละเอียด ---------- */
+/* ---------- แผงรายละเอียดร้าน ---------- */
 .detail{
-  position:absolute;left:0;right:0;bottom:0;top:calc(var(--u)*92);z-index:20;
-  background:linear-gradient(180deg, rgba(251,251,250,.86), var(--sheet-0) 12%);
-  border-top:1px solid var(--ink);
-  padding:calc(var(--u)*6) calc(var(--u)*5.5);
-  transform:translateY(100%);transition:transform .55s var(--slow);
-  display:flex;flex-direction:column;
+  position:absolute;left:0;right:0;bottom:0;z-index:6;
+  background:var(--paper-2);border-top:1px solid var(--hair);
+  border-radius:calc(var(--u)*3) calc(var(--u)*3) 0 0;
+  padding:calc(var(--u)*4) calc(var(--u)*5) calc(var(--u)*5);
+  transform:translateY(102%);transition:transform .42s var(--slow);
+  box-shadow:0 calc(var(--u)*-2) calc(var(--u)*6) rgba(35,35,31,.07);
 }
-.detail.on{transform:none}
-.dtop{display:flex;align-items:flex-start;gap:calc(var(--u)*4)}
+.detail.on{transform:translateY(0)}
+.dtop{display:flex;align-items:center;gap:calc(var(--u)*2.6)}
 .demblem{
-  width:calc(var(--u)*17);height:calc(var(--u)*17);flex:none;border-radius:calc(var(--u)*1.2);
-  border:1px solid var(--ink);display:grid;place-items:center;
-  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*6);
-  color:#FFFFFF;background:linear-gradient(168deg,#2E3339,#1C2025);
+  width:calc(var(--u)*11);height:calc(var(--u)*11);border-radius:calc(var(--u)*1.5);
+  background:var(--paper-3);display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*4);flex:0 0 auto;
 }
-.dname{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*5.1);line-height:1.32}
-.dkind{font-size:calc(var(--u)*2.7);letter-spacing:.24em;color:var(--sil-2);margin-top:calc(var(--u)*1.2);font-weight:300}
-.dclose{margin-left:auto;font-family:var(--f-display);font-size:calc(var(--u)*5);color:var(--ink-soft);line-height:1}
-.ddesc{font-size:calc(var(--u)*3.2);line-height:1.75;color:rgba(32,36,42,.72);margin-top:calc(var(--u)*4);font-weight:300}
-.dfacts{display:flex;gap:calc(var(--u)*5);margin-top:calc(var(--u)*4.5);padding-top:calc(var(--u)*4);border-top:1px solid var(--hair)}
-.dfacts div span{display:block;font-size:calc(var(--u)*2.3);letter-spacing:.2em;color:var(--ink-soft);margin-bottom:calc(var(--u)*1)}
-.dfacts div b{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*3.5);color:var(--ink)}
+.dname{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*4.4);line-height:1.3}
+.dkind{font-size:calc(var(--u)*2.5);color:var(--olive);margin-top:calc(var(--u)*.4)}
+.dclose{
+  margin-left:auto;border:0;background:transparent;color:var(--olive);
+  font-family:var(--f-display);font-size:calc(var(--u)*4.6);line-height:1;cursor:pointer;
+}
+.ddesc{
+  margin-top:calc(var(--u)*2.4);font-size:calc(var(--u)*2.8);
+  line-height:1.72;color:var(--ink-soft);
+}
+.dfacts{
+  display:flex;gap:calc(var(--u)*2);margin-top:calc(var(--u)*3);
+  border-top:1px solid var(--hair);padding-top:calc(var(--u)*2.6);
+}
+.dfacts div{flex:1}
+.dfacts span{
+  display:block;font-size:calc(var(--u)*2);color:var(--olive);
+  letter-spacing:.13em;
+}
+.dfacts b{
+  display:block;font-family:var(--f-display);font-weight:400;
+  font-size:calc(var(--u)*3.2);margin-top:calc(var(--u)*.6);
+}
 .dgo{
-  margin-top:auto;width:100%;padding:calc(var(--u)*4) 0;
-  border:1px solid var(--ink);border-radius:calc(var(--u)*1);
-  font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*3.6);
-  letter-spacing:.24em;text-indent:.24em;color:var(--ink);
-  transition:.4s var(--slow);
+  width:100%;margin-top:calc(var(--u)*3.2);border:0;border-radius:calc(var(--u)*1.6);
+  background:var(--ink);color:var(--paper-2);cursor:pointer;
+  font-family:var(--f-body);font-weight:400;font-size:calc(var(--u)*3.2);
+  padding:calc(var(--u)*2.6) 0;letter-spacing:.03em;
 }
-.dgo:active,.dgo.walking{background:var(--ink);color:#fff}
+.dgo:active{opacity:.86}
 
-/* ---------- ข้อความแจ้งเตือนเล็กๆ ---------- */
+/* ---------- แถบล่างสุด ---------- */
+.youbar{
+  display:flex;align-items:center;gap:calc(var(--u)*1.8);
+  padding:calc(var(--u)*2.2) calc(var(--u)*5);
+  border-top:1px solid var(--hair);background:var(--paper);
+  font-size:calc(var(--u)*2.4);color:var(--ink-soft);
+}
+.dot{
+  width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);border-radius:50%;
+  background:var(--clay);flex:0 0 auto;
+}
+.youbar b{font-weight:400;color:var(--ink)}
+
 .toast{
-  position:absolute;left:50%;bottom:calc(var(--u)*8);z-index:30;
-  transform:translate(-50%, calc(var(--u)*4));opacity:0;pointer-events:none;
-  padding:calc(var(--u)*2) calc(var(--u)*4);border-radius:999px;
-  background:rgba(32,36,42,.94);border:1px solid rgba(32,36,42,.2);
-  font-size:calc(var(--u)*2.8);color:#FFFFFF;
-  transition:.4s var(--slow);
+  position:absolute;left:50%;top:calc(var(--u)*4);transform:translate(-50%,-160%);
+  background:var(--ink);color:var(--paper-2);border-radius:999px;
+  padding:calc(var(--u)*1.6) calc(var(--u)*4);font-size:calc(var(--u)*2.5);
+  transition:transform .4s var(--slow);z-index:9;white-space:nowrap;
 }
-.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.on{transform:translate(-50%,0)}
 
-.hint{
-  position:absolute;top:calc(var(--u)*85);left:0;right:0;z-index:6;text-align:center;
-  font-size:calc(var(--u)*2.5);letter-spacing:.2em;color:rgba(32,36,42,.34);
-  pointer-events:none;transition:opacity .5s;font-weight:200;
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important}
 }
-.hint.hide{opacity:0}
-
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition-duration:.16s !important}}
 </style>
 </head>
 <body>
 <div class="stage" id="stage">
 
   <header class="head">
-    <div class="mark">SEACON SQUARE</div>
-    <div class="sub">แผนผังร้านค้า · ชั้น 2</div>
+    <div class="topline">
+      <div class="eyebrow">MyScape · Seacon Square</div>
+      <div class="badge">ตัวอย่างระบบ · ชื่อร้านสมมติ</div>
+    </div>
+    <div class="zone">
+      <span class="lvl">1</span>
+      <h1>My <b>Pulse</b></h1>
+    </div>
+    <div class="tag">ที่ที่ของใหม่ขึ้นเวที — เทรนด์ แบรนด์ และอีเวนต์</div>
+    <div class="note">ผังลอกจากเอกสารโครงการ ตำแหน่งเป็นค่าประมาณ · ยังไม่ใช่รายชื่อผู้เช่าจริง</div>
   </header>
 
-  <canvas id="view"></canvas>
-  <div class="maptag">ศูนย์อาหาร</div>
-
-  <div class="tools">
-    <button class="tool" id="rotL" aria-label="หมุนซ้าย">‹</button>
-    <button class="tool" id="rotR" aria-label="หมุนขวา">›</button>
-    <button class="tool" id="home" aria-label="กลับมุมมองเริ่มต้น">⌂</button>
+  <div class="mapwrap">
+    <canvas id="view"></canvas>
+    <div class="tools">
+      <button class="tool" id="rotL" aria-label="หมุนซ้าย">‹</button>
+      <button class="tool" id="rotR" aria-label="หมุนขวา">›</button>
+      <button class="tool" id="home" aria-label="กลับมุมมองเริ่มต้น">⌂</button>
+    </div>
+    <div class="hint" id="hint">ลากเพื่อหมุนแผนผัง</div>
   </div>
 
-  <div class="hint" id="hint">ลากเพื่อหมุนแผนผัง</div>
+  <nav class="floors" id="floors"></nav>
 
-  <nav class="cats" id="cats"></nav>
-  <div class="hairline"></div>
-  <div class="subs" id="subs"></div>
+  <div class="find">
+    <div class="searchbox">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M11 11l4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <input id="q" type="search" placeholder="ค้นหาร้าน เช่น รองเท้า กาแฟ" autocomplete="off">
+      <button class="qclear" id="qclear" aria-label="ล้างคำค้น">×</button>
+    </div>
+  </div>
+
+  <div class="cats" id="cats"></div>
   <div class="grid" id="grid"></div>
 
-  <section class="detail" id="detail">
+  <section class="detail" id="detail" aria-live="polite">
     <div class="dtop">
       <div class="demblem" id="dMono"></div>
       <div>
@@ -261,144 +328,422 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     <p class="ddesc" id="dDesc"></p>
     <div class="dfacts">
       <div><span>ยูนิต</span><b id="dUnit"></b></div>
-      <div><span>เวลาเปิด</span><b id="dHours"></b></div>
+      <div><span>ขนาด</span><b id="dArea"></b></div>
       <div><span>ระยะเดิน</span><b id="dDist"></b></div>
     </div>
-    <button class="dgo" id="dGo">นำทางไปยังร้าน</button>
+    <button class="dgo" id="dGo">พาไปที่ร้าน</button>
   </section>
+
+  <div class="youbar">
+    <span class="dot"></span>
+    <span>คุณอยู่ที่ <b id="youName">ทางเข้าฝั่งใต้ · ชั้น 1</b></span>
+  </div>
 
   <div class="toast" id="toast"></div>
 </div>
 
 <script>
-(function(){
 "use strict";
 function $(id){ return document.getElementById(id); }
 
 /* ==================================================================
-   1. ข้อมูล — ส่วนเดียวที่ทีมห้างต้องแก้
-   ชื่อร้านทั้งหมดเป็นชื่อสมมติสำหรับ mockup
+   1. ข้อมูลผัง — ลอกจาก L1 MY PULSE FLOOR PLAN DIAGRAM ในเด็ค MyScape
+      พิกัดเก็บเป็นหน่วยพิกเซลของภาพผังต้นฉบับ แล้วแปลงเป็นเมตรตอนโหลด
+      เมื่อได้ไฟล์ DXF ให้แทนที่ทั้งบล็อกนี้บล็อกเดียว ไม่ต้องแตะเรนเดอเรอร์
+      ------------------------------------------------------------------
+      สเกล 19.3 px ต่อเมตร หาจากการเทียบพื้นที่กล่องยูนิตกับตารางเมตร
+      ที่เด็คระบุไว้ 9 ยูนิต ค่ากระจายอยู่ระหว่าง 15.6–25.2 มัธยฐาน 19.27
+      แปลว่าตำแหน่งที่ได้คลาดเคลื่อนได้ระดับเมตร ห้ามใช้วัดระยะจริง
    ================================================================== */
+var PLAN = { ox:180, oy:60, s:19.3 };
+function MX(px){ return (px - PLAN.ox) / PLAN.s; }
+function MZ(py){ return (py - PLAN.oy) / PLAN.s; }
+function MP(px,py){ return {x:MX(px), z:MZ(py)}; }
+function ML(v){ return v / PLAN.s; }
 
-var CATEGORIES = [
-  {id:"food",    name:"อาหารและเครื่องดื่ม", en:"FOOD & BEVERAGE", ready:true},
-  {id:"beauty",  name:"สุขภาพและความงาม",   en:"HEALTH & BEAUTY",  ready:false},
-  {id:"it",      name:"ไอทีและมือถือ",       en:"IT & MOBILE",      ready:false},
-  {id:"finance", name:"การเงินและธนาคาร",   en:"FINANCE",          ready:false},
-  {id:"fashion", name:"แฟชั่น",              en:"FASHION",          ready:false}
+/* ขอบเขตพื้นชั้น */
+var PLATE_PX = [[345,140],[2100,140],[2180,215],[3505,1285],[3505,1420],[3465,1790],
+                [3120,1885],[640,1885],[640,1565],[185,1525],[185,1300],[345,1245]];
+
+/* โถงกลาง MAIN ATRIUM — ช่องเปิดทะลุชั้นล่าง */
+var ATRIUM_PX = [[2130,395],[2185,235],[3500,1290],[3400,1355],[2760,845]];
+var VOID_PX   = [[2400,530],[3265,1220],[3175,1288],[2565,700]];
+
+/* พื้นที่สีเขียวและแนวต้นไม้ในผัง */
+var GREEN_PX = [
+  [[640,1000],[1462,995],[1462,1178],[640,1183]],
+  [[255,1215],[1205,1238],[1205,1332],[255,1312]],
+  [[2295,1185],[3200,1180],[3200,1282],[2295,1288]]
+];
+var TREE_PX = [[720,1090],[900,1075],[1090,1090],[1270,1075],[1420,1090],
+               [400,1265],[600,1280],[820,1290],[1040,1300],
+               [2400,1235],[2620,1228],[2860,1232],[3080,1228]];
+
+/* พื้นจอ LED กลางโซน — ของจริงในผัง เป็นตัวชูโรงของ My Pulse */
+var LED_PX = [[1790,1078],[2480,1070],[2515,1215],[1755,1222]];
+/* แกนสายตาหลักที่ผังตีเส้นประเหลืองไว้ จาก MUN ผ่านจอ LED ออกโถงกลาง */
+var AXIS_PX = [[195,1400],[1755,1150],[2515,1140],[3480,1132]];
+
+/* ทางเข้าออก — ลูกศรแดงในผัง */
+var DOORS_PX = [
+  {p:[1180,142], n:[0,1],  label:"ทางเข้าเหนือ"},
+  {p:[2300,255], n:[-0.6,0.8], label:"ทางเข้าโถงกลาง"},
+  {p:[3330,1150],n:[-1,0], label:"ทางเข้าตะวันออก"},
+  {p:[1600,1883],n:[0,-1], label:"ทางเข้าใต้"},
+  {p:[195,1400], n:[1,0],  label:"เชื่อม MUN x 2"}
 ];
 
-var SUBS = [
-  {id:"",     name:"ทั้งหมด"},
-  {id:"main", name:"อาหารคาว"},
-  {id:"dess", name:"ของหวาน"},
-  {id:"drink",name:"เครื่องดื่ม"}
-];
+/* จุดที่ตู้ตั้ง — ตู้แต่ละตัวแก้ค่านี้ทีละตัว */
+var YOU_PX = [1600,1620];
 
-/* [ชื่อร้าน, อักษรย่อ, หมวดย่อย, คำอธิบาย] */
-var TENANTS = [
-  ["ครัวคุณย่า",           "KY","main","อาหารตามสั่งและแกงไทยโบราณกว่ายี่สิบอย่าง เปลี่ยนเมนูพิเศษทุกวัน"],
-  ["ก๋วยเตี๋ยวเรือท่าน้ำ",  "TN","main","ก๋วยเตี๋ยวเรือน้ำตกสูตรอยุธยา มีทั้งหมูและเนื้อ ลูกชิ้นทำเอง"],
-  ["ข้าวมันไก่ตวงทอง",     "TT","main","ไก่ต้มและไก่ทอด ข้าวหุงด้วยน้ำต้มกระดูก น้ำจิ้มสูตรเจ้าของร้าน"],
-  ["ชาบูฮับ",              "SH","main","ชาบูบุฟเฟต์ น้ำซุปหกแบบ เนื้อนำเข้าและผักสดจากฟาร์ม"],
-  ["ปิ้งย่างเตาถ่าน",      "TC","main","หมูย่างสไตล์เกาหลีบนเตาถ่านจริง หมักด้วยสูตรเฉพาะข้ามคืน"],
-  ["ส้มตำแซ่บนัว",         "SN","main","ตำไทย ตำปูปลาร้า ไก่ย่าง คอหมูย่าง ครกละครกตำสด"],
-  ["ข้าวหมูกรอบเจ๊แดง",    "JD","main","หมูกรอบ หมูแดง และเป็ดย่าง ทอดใหม่ทุกสองชั่วโมง"],
-  ["ซูชิคาวะ",             "KW","main","ซูชิและซาชิมิ ปลาส่งตรงจากตลาดทุกเช้า มีเคาน์เตอร์นั่งหน้าเชฟ"],
-  ["พิซซ่าฟอร์โน่",        "FN","main","พิซซ่าเตาฟืนอุณหภูมิสูง แป้งหมักสี่สิบแปดชั่วโมง"],
-  ["ก๋วยจั๊บญวนป้าน้อย",   "PN","main","ก๋วยจั๊บญวน แหนมเนือง หมูยอ เครื่องเคียงสิบอย่าง"],
-  ["ไก่ทอดคริสปี้",        "CR","main","ไก่ทอดกรอบ เบอร์เกอร์ และเฟรนช์ฟรายส์ตัดหนา"],
-  ["บะหมี่เป็ดฮ่องกง",     "HK","main","บะหมี่เกี๊ยวและเป็ดย่างสไตล์ฮ่องกง น้ำซุปเคี่ยวแปดชั่วโมง"],
-  ["ไอศกรีมโฮมเมด",        "HM","dess","ไอศกรีมกะทิและชาไทย สิบแปดรสชาติ ทำสดทุกวัน"],
-  ["บิงซูหิมะ",            "BS","dess","บิงซูเกล็ดนุ่ม ผลไม้สดตามฤดูกาล เสิร์ฟถ้วยใหญ่แบ่งกันได้"],
-  ["เครปญี่ปุ่นละมุน",     "LM","dess","เครปสดม้วนมือ ครีมสดตีใหม่ทุกชั่วโมง"],
-  ["บัวลอยคุณป้า",         "BL","dess","บัวลอยไข่หวาน น้ำกะทิสด ขนมไทยหมุนเวียนตามวัน"],
-  ["กาแฟดอยหอม",          "DH","drink","เมล็ดคั่วเองจากดอยทางเหนือ มีที่นั่งยี่สิบที่และปลั๊กทุกโต๊ะ"],
-  ["ชานมไข่มุกมูมู่",      "MM","drink","ชานมไต้หวัน ชีสโฟม ปรับความหวานได้ห้าระดับ"],
-  ["น้ำผลไม้ฟรุ๊ตตี้",     "FT","drink","น้ำผลไม้คั้นสดไม่เติมน้ำตาล สมูทตี้และน้ำมะพร้าว"],
-  ["ชาไทยโบราณ",          "TB","drink","ชาไทย ชาเย็น ชามะนาว ชงด้วยถุงชาแบบดั้งเดิม"]
-];
+/* ---- ยูนิตร้าน 50 ยูนิต 1109–1158 ----
+   ตัวเลขตารางเมตรบนผังเป็นของจริงที่พิมพ์มากับเด็ค เชื่อได้
+   ส่วนกล่องที่วัดจากพิกเซลเชื่อไม่ได้ คลาดเคลื่อนได้ถึง 30%
+   จึงใช้ตารางเมตรเป็นตัวตั้ง แล้วคำนวณหน้ากว้างจากความลึกของแถว
+   ผลคือทุกยูนิตมีพื้นที่ตรงกับผังเป๊ะ เหลือแค่ตำแหน่งที่ยังเป็นค่าประมาณ
 
-var SUBNAME = {main:"อาหารคาว", dess:"ของหวาน", drink:"เครื่องดื่ม"};
+   at   จุดมุมเริ่มต้นของแถว (px)
+   dir  ทิศที่ร้านเรียงไป
+   dep  ความลึกของร้าน (px) ตั้งฉากกับ dir เสมอ
+   span ความยาวของแถวที่วัดได้จากผัง ใช้เกลี่ยเป็นร่องระหว่างร้าน       */
+var AREA = {
+  "1109":163.79,"1110":116.30,"1111":158.44,"1112":225.22,"1113":74.36,"1114":277.62,
+  "1115":202.32,"1116":193.03,"1117":155.59,"1118":139.20,"1119":139.20,"1120":139.20,
+  "1121":139.20,"1122":158.86,"1123":134.48,"1124":82.93,"1125":44.55,"1126":88.42,
+  "1127":78.90,"1128":88.61,"1129":79.03,"1130":84.62,"1131":123.83,"1132":61.39,
+  "1133":129.78,"1134":112.49,"1135":117.66,"1136":107.76,"1137":71.00,"1138":97.91,
+  "1139":114.20,"1140":82.85,"1141":164.27,"1142":117.55,"1143":114.74,"1144":74.36,
+  "1145":61.36,"1146":84.62,"1147":100.68,"1148":114.54,"1149":81.84,"1150":79.05,
+  "1151":114.54,"1152":112.74,"1153":76.37,"1154":74.36,"1155":81.59,"1156":128.30,
+  "1157":131.75,"1158":135.77
+};
+var ROWS = [
+  /* บล็อกซ้าย 1148–1158 */
+  {at:[424,149],  dir:[1,0], dep:241, span:689,  list:["1151","1150","1149","1148"]},
+  {at:[425,397],  dir:[1,0], dep:155, span:687,  list:["1152","1158"]},
+  {at:[425,558],  dir:[1,0], dep:156, span:688,  list:["1153","1157"]},
+  {at:[423,720],  dir:[1,0], dep:164, span:690,  list:["1154","1155","1156"]},
+  /* บล็อกกลาง 1138–1147 */
+  {at:[1382,149], dir:[1,0], dep:242, span:752,  list:["1141","1140","1139","1138"]},
+  {at:[1382,397], dir:[1,0], dep:155, span:572,  list:["1142","1147"]},
+  {at:[1382,559], dir:[1,0], dep:172, span:433,  list:["1143","1146"]},
+  {at:[1381,735], dir:[1,0], dep:164, span:313,  list:["1144","1145"]},
+  /* บล็อกเฉียงริมโถงกลาง 1124–1137 */
+  /* บล็อกริมโถงกลาง ในผังเป็นรูปลิ่มเรียงตามแนวโถง ไม่ใช่สี่เหลี่ยม
+     จึงวางเป็นแถบขนานกันสองแถบตามแนวโถง แล้วใช้หน้ากว้างที่วัดจากผังตรงๆ
+     กล่องหกใบริมโถงจะเล็กกว่าตารางเมตรจริงประมาณ 36% เท่ากันหมด
+     ตัวเลขที่โชว์ในแผงรายละเอียดยังเป็นค่าจากผัง ไม่ได้คำนวณจากกล่อง */
+  {at:[2120,398], dir:[0.814,0.581], dep:150, span:756,
+   list:[["1130",150,135],["1129",150,126],["1128",150,141],["1127",150,126],["1126",150,141],["1125",150,71]]},
+  {at:[2031,523], dir:[0.814,0.581], dep:195, span:380, list:["1132","1131"]},
+  {at:[1704,965], dir:[1,0], dep:191, span:1190,
+   list:["1133","1134","1135","1136","1137","1124"]},
+  /* แถวใต้ 1115–1123 */
+  {at:[597,1520], dir:[1,0], dep:340, span:1548, list:["1123","1122","1121","1120","1119","1118","1117","1116","1115"]},
+  /* บล็อกตะวันออก 1109–1114 */
+  {at:[2436,1367],dir:[1,0], dep:460, span:232, list:["1114"]},
+  {at:[2668,1367],dir:[1,0], dep:190, span:150, list:["1113"]},
+  {at:[2821,1367],dir:[1,0], dep:460, span:188, list:["1112"]},
+  {at:[3010,1367],dir:[1,0], dep:322, span:189, list:["1111"]},
+  {at:[3200,1367],dir:[1,0], dep:154, span:287, list:["1110"]},
+  {at:[3200,1529],dir:[1,0], dep:217, span:287, list:["1109"]}
+];
+var SOLO = [];
+
+/* ---- โครงทางเดิน เป็นกราฟจุดต่อจุด ----
+   ผังจริงมีทางเดินหลายเส้นและมีบันไดเลื่อน วนรอบเดียวใช้ไม่ได้แล้ว
+   จุดพวกนี้อ่านจากแนวทางเดินสีเทาในผัง                              */
+var NODES_PX = {
+  a0:[350,1285], a1:[700,1300], a2:[1100,1320], a3:[1500,1340], a4:[1900,1330],
+  a5:[2300,1300], a6:[2750,1270], a7:[3150,1240], a8:[3270,1420],
+  b0:[1250,950],  b1:[1750,940],  b2:[2150,930],  b3:[2620,1330],
+  c0:[1250,430],  c1:[2080,340],
+  d0:[900,1700],  d1:[1600,1700], d2:[2100,1690]
+};
+var EDGES = [
+  ["a0","a1"],["a1","a2"],["a2","a3"],["a3","a4"],["a4","a5"],["a5","a6"],["a6","a7"],
+  ["a7","a8"],["a8","a6"],
+  ["a2","b0"],["b0","b1"],["b1","b2"],["b2","b3"],["b3","a5"],
+  ["b0","c0"],["b2","c1"],["c0","c1"],
+  ["a3","d1"],["d1","d0"],["d0","a1"],["d1","d2"],["d2","a5"]
+];
 
 /* ==================================================================
-   2. ปั้นผังศูนย์อาหาร — ร้านล้อมรอบ โซนที่นั่งตรงกลาง
-      ทุกอย่างสร้างจากตัวเลข ไม่มีการปั้นโมเดลด้วยมือ
+   2. ร้านค้า — ชื่อสมมติทั้งหมดสำหรับ mockup
+      [เลขยูนิต, ชื่อร้าน, อักษรย่อ, หมวด, คำโปรย]
+      แยกออกเป็น shops.json ได้เลยเมื่อฝ่ายเช่าพื้นที่จะดูแลเอง
    ================================================================== */
-var HALL = {x0:0, x1:52, z0:0, z1:40, depth:7};
-var SEAT = {x0:13.5, x1:38.5, z0:13.5, z1:26.5};
-var YOU  = {x:26, z:10};                    /* จุดที่ตู้ตั้งอยู่ */
-var RING = [{x:10,z:10},{x:42,z:10},{x:42,z:30},{x:10,z:30}];  /* แนวทางเดินวน */
+var CATS = [
+  {id:"",       name:"ทั้งหมด"},
+  {id:"fashion",name:"แฟชั่น"},
+  {id:"shoe",   name:"รองเท้าและกระเป๋า"},
+  {id:"beauty", name:"ความงาม"},
+  {id:"pop",    name:"ของสะสม"},
+  {id:"tech",   name:"แกดเจ็ต"},
+  {id:"sport",  name:"กีฬา"},
+  {id:"cafe",   name:"คาเฟ่"},
+  {id:"jewel",  name:"เครื่องประดับ"}
+];
+var CATNAME = {};
+CATS.forEach(function(c){ if(c.id) CATNAME[c.id] = c.name; });
+
+var TENANTS = [
+  ["1109","ซูเปอร์สนีกเกอร์","SK","shoe","รองเท้าผ้าใบรุ่นลิมิเต็ดและงานคอลแล็บ มีคิวจับสลากรุ่นหายากทุกวันเสาร์"],
+  ["1110","กลาสเฮาส์ ออพติก","GO","fashion","แว่นสายตาและแว่นกันแดด วัดสายตาฟรี ประกอบเสร็จภายในชั่วโมงเดียว"],
+  ["1111","เดนิมเวิร์กช็อป","DW","fashion","ยีนส์ดิบและงานตัดเย็บ แก้ขาและปักชื่อรอรับได้ที่ร้าน"],
+  ["1112","อาร์เคด โตเกียว","AT","pop","ตู้เกมญี่ปุ่นและตู้คีบตุ๊กตา เปลี่ยนของรางวัลใหม่ทุกสัปดาห์"],
+  ["1113","ชาร์จบาร์","CB","tech","จุดชาร์จเร็วและเช่าพาวเวอร์แบงก์ ฝากอุปกรณ์ระหว่างเดินได้"],
+  ["1114","พัลส์ ฟลากชิป","PF","fashion","ร้านหลักประจำโซน เปลี่ยนธีมหน้าร้านทุกไตรมาส มีเวทีเล็กสำหรับเปิดตัวคอลเลกชัน"],
+  ["1115","มูฟเมนต์ สปอร์ต","MS","sport","ชุดออกกำลังกายและอุปกรณ์วิ่ง มีลู่ทดลองรองเท้าในร้าน"],
+  ["1116","ลิปสติกแล็บ","LL","beauty","ผสมสีลิปสติกเฉพาะตัว เลือกเนื้อและสีเองแล้วรอรับได้เลย"],
+  ["1117","คิกส์ แอนด์ โค","KC","shoe","รองเท้าลำลองและบริการทำความสะอาดรองเท้า รับงานคืนภายในสองวัน"],
+  ["1118","เพลย์ทอยส์ พาเหรด","PP","pop","ของเล่นสะสมและกล่องสุ่ม มีโซนแลกเปลี่ยนสำหรับนักสะสม"],
+  ["1119","ซาวด์เวฟ ออดิโอ","SW","tech","หูฟังและลำโพง มีห้องลองฟังเก็บเสียงสองห้อง"],
+  ["1120","สตรีทไลน์","SL","fashion","เสื้อผ้าสตรีทและงานศิลปินไทย พิมพ์ลายเสื้อสดหน้าร้าน"],
+  ["1121","บลูมมิ่ง บิวตี้","BB","beauty","เครื่องสำอางและสกินแคร์ มีมุมลองแต่งหน้าพร้อมช่างประจำร้าน"],
+  ["1122","เดอะ แคปซูล","TC","fashion","เสื้อผ้าคอลเลกชันจำกัดจำนวน เปลี่ยนของทั้งร้านทุกเดือน"],
+  ["1123","นาฬิกาไทม์เมอร์","TM","jewel","นาฬิกาข้อมือและบริการเปลี่ยนถ่านปรับสาย รอรับได้"],
+  ["1124","มินิมอล ริง","MR","jewel","เครื่องประดับเงินและทองคำขาว สลักตัวอักษรฟรีทุกชิ้น"],
+  ["1125","คอฟฟี่ พิท","CP","cafe","กาแฟสกัดเย็นและเอสเพรสโซ ยืนดื่มริมโถงกลาง มีที่นั่งหกที่"],
+  ["1126","แว่นตาโฟกัส","FC","fashion","แว่นกรองแสงและคอนแทกต์เลนส์ ตรวจวัดสายตาโดยนักทัศนมาตร"],
+  ["1127","เพอร์ฟูม สตูดิโอ","PS","beauty","น้ำหอมนิชและกลิ่นผสมเฉพาะตัว ทดลองกลิ่นได้ทุกขวด"],
+  ["1128","อาร์ตทอย แกลเลอรี","AG","pop","อาร์ตทอยและงานศิลปินไทย จัดแสดงหมุนเวียนทุกสองสัปดาห์"],
+  ["1129","สเก็ตช์ สตูดิโอ","SS","pop","วาดภาพเหมือนและงานพิมพ์ รอรับได้ภายในยี่สิบนาที"],
+  ["1130","เทรนด์ล็อบบี้","TL","fashion","พื้นที่แบรนด์หมุนเวียน เปลี่ยนแบรนด์ที่มาลงทุกหกสัปดาห์"],
+  ["1131","ซีซั่น แฟชั่น","SF","fashion","เสื้อผ้าตามฤดูกาลและงานคัดสไตล์ มีสไตลิสต์ให้คำแนะนำ"],
+  ["1132","ชาโคล คาเฟ่","CC","cafe","กาแฟคั่วเข้มและเบเกอรี มีปลั๊กทุกโต๊ะ ที่นั่งยี่สิบสี่ที่"],
+  ["1133","แอ็กทีฟ เกียร์","AC","sport","อุปกรณ์ออกกำลังกายและกระเป๋ากีฬา มีมุมทดลองยกน้ำหนัก"],
+  ["1134","ไฮเปอร์ สนีกเกอร์","HS","shoe","รองเท้าวิ่งและบาสเกตบอล วิเคราะห์การลงน้ำหนักเท้าฟรี"],
+  ["1135","กระเป๋าลีดเดอร์","LD","shoe","กระเป๋าหนังแท้และงานซ่อม รับซ่อมซิปและเปลี่ยนสายภายในสามวัน"],
+  ["1136","สกินซอร์ส","SC","beauty","สกินแคร์เกาหลีและญี่ปุ่น มีเครื่องวิเคราะห์สภาพผิวหน้าร้าน"],
+  ["1137","เนลบาร์ นูโว","NB","beauty","ทำเล็บและต่อขนตา จองคิวล่วงหน้าได้ที่หน้าร้าน"],
+  ["1138","อีเวนต์ สเตจ","ES","pop","เวทีกิจกรรมประจำโซน มีงานเปิดตัวและมีตติ้งเกือบทุกสุดสัปดาห์"],
+  ["1139","โมบายฮับ","MH","tech","มือถือและอุปกรณ์เสริม ย้ายข้อมูลเครื่องใหม่ให้ฟรี"],
+  ["1140","เกมเมอร์ส เดน","GD","tech","เกมและอุปกรณ์เกมมิ่ง มีเครื่องให้ลองเล่นสี่จุด"],
+  ["1141","คอนเซ็ปต์ ไนน์","C9","fashion","ร้านมัลติแบรนด์ คัดของจากเก้าแบรนด์ในประเทศ"],
+  ["1142","เอาต์ดอร์ แล็บ","OL","sport","อุปกรณ์เดินป่าและแคมป์ปิ้ง มีผนังปีนจำลองให้ลองรองเท้า"],
+  ["1143","แจ็กเก็ต โซไซตี้","JS","fashion","แจ็กเก็ตและเสื้อคลุม รับปักและติดตัวรีดหน้าร้าน"],
+  ["1144","ฮอทซอส","HZ","cafe","ของว่างและแซนด์วิชร้อน สั่งกลับได้ภายในห้านาที"],
+  ["1145","ทีบาร์ ทเวนตี้","TB","cafe","ชาชงและชานม เลือกใบชาได้ยี่สิบชนิด ปรับความหวานได้"],
+  ["1146","ซิลเวอร์ สโตน","SV","jewel","เครื่องประดับหินสีและงานเงิน ปรับขนาดแหวนรอรับได้"],
+  ["1147","พิกเซล พรินต์","PX","pop","พิมพ์ภาพและสติกเกอร์ มีตู้ถ่ายรูปสี่ตู้"],
+  ["1148","ลุคบุ๊ก","LB","fashion","เสื้อผ้าผู้หญิงและการจัดชุด มีบริการนัดสไตลิสต์"],
+  ["1149","แคปแอนด์แคป","CK","fashion","หมวกและงานปัก ปักตัวอักษรบนหมวกรอรับได้"],
+  ["1150","ซ็อกส์ สเตชั่น","SO","fashion","ถุงเท้าและถุงน่อง มีลายพิเศษเปลี่ยนทุกเดือน"],
+  ["1151","เดอะ แร็ก","TR","fashion","เสื้อผ้ามือสองคัดสภาพดีและงานวินเทจ เข้าของใหม่ทุกวันพฤหัส"],
+  ["1152","รันเนอร์ส แล็บ","RL","sport","รองเท้าวิ่งและนาฬิกาจับเวลา มีกลุ่มวิ่งของร้านทุกวันอาทิตย์"],
+  ["1153","ยิม โน้ต","GN","sport","ชุดออกกำลังกายและอุปกรณ์เล็ก มีตารางคลาสของโซนติดหน้าร้าน"],
+  ["1154","บิวตี้ บ็อกซ์","BX","beauty","เครื่องสำอางราคาย่อมเยา มีชุดทดลองให้เลือกจัดเอง"],
+  ["1155","แฮร์ สตูดิโอ","HR","beauty","ตัดและทำสีผม รับคิววอล์กอินถ้าที่นั่งว่าง"],
+  ["1156","โฮมทัช","HT","pop","ของแต่งบ้านชิ้นเล็กและของขวัญ ห่อของขวัญฟรี"],
+  ["1157","เทค รีแพร์","TP","tech","ซ่อมมือถือและแท็บเล็ต เปลี่ยนจอและแบตรอรับได้"],
+  ["1158","สตูดิโอ ฟิตติ้ง","SG","fashion","เสื้อเชิ้ตและกางเกงสั่งตัด วัดตัวครั้งเดียวสั่งซ้ำได้ตลอด"]
+];
+
+/* ชั้นอื่นเตรียมช่องไว้ เปลี่ยน ready เป็น true เมื่อผังชั้นนั้นพร้อม */
+var FLOORS = [
+  {lvl:"1", zone:"My Pulse",     ready:true},
+  {lvl:"2", zone:"My Self",      ready:false},
+  {lvl:"3", zone:"My Chill-Out", ready:false},
+  {lvl:"4", zone:"MyDineScape",  ready:false}
+];
+
+/* ==================================================================
+   3. แปลงผังเป็นโมเดล — ทุกอย่างสร้างจากตัวเลขตอนโหลด
+   ================================================================== */
+var PLATE = PLATE_PX.map(function(p){ return MP(p[0],p[1]); });
+var ATRIUM = ATRIUM_PX.map(function(p){ return MP(p[0],p[1]); });
+var VOID = VOID_PX.map(function(p){ return MP(p[0],p[1]); });
+var GREEN = GREEN_PX.map(function(g){ return g.map(function(p){ return MP(p[0],p[1]); }); });
+var TREES = TREE_PX.map(function(p){ return MP(p[0],p[1]); });
+var LED = LED_PX.map(function(p){ return MP(p[0],p[1]); });
+var AXIS = AXIS_PX.map(function(p){ return MP(p[0],p[1]); });
+var YOU = MP(YOU_PX[0], YOU_PX[1]);
+var DOORS = DOORS_PX.map(function(d){
+  return { p:MP(d.p[0],d.p[1]), n:{x:d.n[0], z:d.n[1]}, label:d.label };
+});
+
+var TEN = {};
+TENANTS.forEach(function(t){ TEN[t[0]] = {no:t[0], name:t[1], mono:t[2], cat:t[3], desc:t[4]}; });
 
 var shops = [];
-(function buildHall(){
-  var d = HALL.depth, g = 0.55, i, k = 0;
-  function row(n, axis, fixed, from, to, doorSide){
-    var span = to - from, size = (span - g*(n-1))/n, p = from;
-    for(i=0;i<n;i++){
-      var t = TENANTS[k]; if(!t) return;
-      var s = {
-        idx:k, name:t[0], mono:t[1], sub:t[2], desc:t[3],
-        unit:"2F-" + String(k+1).padStart(2,"0"),
-        h: 3.2 + ((k*37)%9)*0.16,     /* ความสูงต่างกันเล็กน้อย ให้ไม่แบนราบ */
-        pop: 0                         /* ค่าเด้งตอนถูกเลือก */
-      };
-      if(axis === "x"){ s.x = p; s.w = size; s.z = fixed; s.d = d; }
-      else            { s.z = p; s.d = size; s.x = fixed; s.w = d; }
-      s.door = doorSide(s);
-      shops.push(s); p += size + g; k++;
-    }
+(function buildFloor(){
+  var S2 = PLAN.s * PLAN.s;
+  /* หน้ากว้างเป็นพิกเซล คำนวณย้อนจากตารางเมตรจริงหารด้วยความลึกของแถว */
+  function frontage(no, dep){ return AREA[no] * S2 / dep; }
+
+  function push(no, cx, cz, w, d, rot){
+    var t = TEN[no];
+    if(!t) return;
+    var s = {
+      no:no, name:t.name, mono:t.mono, cat:t.cat, desc:t.desc, area:AREA[no],
+      cx:cx, cz:cz, w:w, d:d, rot:rot,
+      h: 4.4 + ((parseInt(no,10)*37) % 9) * 0.22,   /* สูงต่างกันเล็กน้อย ไม่ให้แบนราบ */
+      pop: 0
+    };
+    s.corners = cornersOf(s);
+    shops.push(s);
   }
-  row(6,"x",HALL.z1-d, 2, 50, function(s){ return {x:s.x+s.w/2, z:s.z}; });        /* แถวเหนือ */
-  row(6,"x",0,          2, 50, function(s){ return {x:s.x+s.w/2, z:s.z+s.d}; });   /* แถวใต้ */
-  row(4,"z",0,          9.5, 30.5, function(s){ return {x:s.x+s.w, z:s.z+s.d/2}; });      /* ฝั่งตะวันตก */
-  row(4,"z",HALL.x1-d,  9.5, 30.5, function(s){ return {x:s.x, z:s.z+s.d/2}; });          /* ฝั่งตะวันออก */
+
+  ROWS.forEach(function(r){
+    var dx = r.dir[0], dy = r.dir[1];
+    var L = Math.hypot(dx,dy); dx/=L; dy/=L;
+    var px = -dy, py = dx;              /* ตั้งฉาก ชี้ไปทางความลึกของร้าน */
+
+    var side = r.side || 1;
+    px *= side; py *= side;
+    var ids = r.list.map(function(e){ return (typeof e === "string") ? e : e[0]; });
+    var dps = r.list.map(function(e){ return (typeof e === "string") ? r.dep : e[1]; });
+    /* ถ้าใส่ค่าที่สามมา แปลว่าวัดหน้ากว้างจากผังมาตรงๆ ไม่ต้องคำนวณจากตารางเมตร */
+    var fw = r.list.map(function(e,i){
+      return (typeof e !== "string" && e.length > 2) ? e[2] : frontage(ids[i], dps[i]);
+    });
+    var sum = fw.reduce(function(a,b){ return a+b; }, 0);
+    /* ที่เหลือจากช่วงที่วัดได้ เกลี่ยเป็นร่องระหว่างร้าน ผนังกั้นและช่องงานระบบ */
+    var gap = Math.max(2, (r.span - sum) / r.list.length);
+
+    var run = gap/2;
+    ids.forEach(function(no, i){
+      var ax = r.at[0] + dx*(run + fw[i]/2) + px*(dps[i]/2);
+      var ay = r.at[1] + dy*(run + fw[i]/2) + py*(dps[i]/2);
+      push(no, MX(ax), MZ(ay), ML(fw[i]), ML(dps[i] - 3), Math.atan2(dy,dx));
+      run += fw[i] + gap;
+    });
+  });
+
+  SOLO.forEach(function(u){
+    var w = u.w || (AREA[u.no] * S2 / u.dep);
+    push(u.no, MX(u.c[0]), MZ(u.c[1]), ML(w), ML(u.dep - 3), u.rot);
+  });
+
+  /* ตาข่ายกันพลาด — บล็อกเฉียงริมโถงกลางในผังจริงเป็นรูปลิ่ม ไม่ใช่สี่เหลี่ยม
+     ประมาณเป็นกล่องแล้วยังไงก็มีเบียดกันบ้าง ตรงไหนเบียดให้หดลงทีละนิดจนพ้นกัน
+     ผลคือกล่องพวกนั้นเล็กกว่าของจริง ตัวเลขตารางเมตรที่โชว์ในแผงยังเป็นค่าจากผัง */
+  resolveOverlap();
 })();
 
-/* ==================================================================
-   3. เส้นทางเดิน — เดินตามทางวนรอบโซนที่นั่ง เลือกทางที่สั้นกว่า
-   ================================================================== */
-var ringSeg = [], ringLen = 0;
-(function(){
-  for(var i=0;i<RING.length;i++){
-    var a = RING[i], b = RING[(i+1)%RING.length];
-    var L = Math.hypot(b.x-a.x, b.z-a.z);
-    ringSeg.push({a:a,b:b,L:L,at:ringLen}); ringLen += L;
-  }
-})();
-function onRing(p){
-  var best = null;
-  ringSeg.forEach(function(s){
-    var vx = s.b.x-s.a.x, vz = s.b.z-s.a.z;
-    var t = ((p.x-s.a.x)*vx + (p.z-s.a.z)*vz) / (s.L*s.L);
-    t = Math.max(0, Math.min(1, t));
-    var q = {x:s.a.x+vx*t, z:s.a.z+vz*t};
-    var dd = Math.hypot(p.x-q.x, p.z-q.z);
-    if(!best || dd < best.d) best = {d:dd, t:s.at + t*s.L, p:q};
-  });
-  return best;
-}
-function ringPoint(t){
-  t = ((t % ringLen) + ringLen) % ringLen;
-  for(var i=0;i<ringSeg.length;i++){
-    var s = ringSeg[i];
-    if(t <= s.at + s.L || i === ringSeg.length-1){
-      var k = (t - s.at)/s.L;
-      return {x:s.a.x + (s.b.x-s.a.x)*k, z:s.a.z + (s.b.z-s.a.z)*k};
+function resolveOverlap(){
+  function axesOf(c){
+    var r = [];
+    for(var i=0;i<4;i++){
+      var a=c[i], b=c[(i+1)%4], ax=-(b.z-a.z), az=b.x-a.x, l=Math.hypot(ax,az)||1;
+      r.push({x:ax/l, z:az/l});
     }
+    return r;
   }
-  return RING[0];
+  function overlap(A,B){
+    var ax = axesOf(A).concat(axesOf(B));
+    for(var i=0;i<ax.length;i++){
+      var a0=Infinity,a1=-Infinity,b0=Infinity,b1=-Infinity;
+      for(var k=0;k<4;k++){
+        var va=A[k].x*ax[i].x+A[k].z*ax[i].z; if(va<a0)a0=va; if(va>a1)a1=va;
+        var vb=B[k].x*ax[i].x+B[k].z*ax[i].z; if(vb<b0)b0=vb; if(vb>b1)b1=vb;
+      }
+      if(a1 < b0 + 0.08 || b1 < a0 + 0.08) return false;
+    }
+    return true;
+  }
+  for(var pass=0; pass<40; pass++){
+    var hit = false;
+    for(var i=0;i<shops.length;i++){
+      for(var j=i+1;j<shops.length;j++){
+        if(!overlap(shops[i].corners, shops[j].corners)) continue;
+        hit = true;
+        [shops[i], shops[j]].forEach(function(s){
+          s.w *= 0.985; s.d *= 0.985; s.corners = cornersOf(s);
+        });
+      }
+    }
+    if(!hit) break;
+  }
 }
+
+function cornersOf(s){
+  var c = Math.cos(s.rot), n = Math.sin(s.rot);
+  var hw = s.w/2, hd = s.d/2;
+  /* แกนตามหน้ากว้าง (c,n) แกนตามความลึก (-n,c) */
+  return [
+    {x:s.cx - c*hw + n*hd, z:s.cz - n*hw - c*hd},
+    {x:s.cx + c*hw + n*hd, z:s.cz + n*hw - c*hd},
+    {x:s.cx + c*hw - n*hd, z:s.cz + n*hw + c*hd},
+    {x:s.cx - c*hw - n*hd, z:s.cz - n*hw + c*hd}
+  ];
+}
+
+/* ==================================================================
+   4. เส้นทางเดิน — กราฟจุดต่อจุด หาทางสั้นที่สุดด้วย Dijkstra
+      ผังจริงมีหลายทางเดิน วนรอบเดียวแบบเวอร์ชันศูนย์อาหารใช้ไม่ได้
+   ================================================================== */
+var NODES = {}, NKEYS = [];
+Object.keys(NODES_PX).forEach(function(k){
+  NODES[k] = MP(NODES_PX[k][0], NODES_PX[k][1]); NKEYS.push(k);
+});
+var ADJ = {};
+NKEYS.forEach(function(k){ ADJ[k] = []; });
+EDGES.forEach(function(e){
+  var a = NODES[e[0]], b = NODES[e[1]];
+  var w = Math.hypot(b.x-a.x, b.z-a.z);
+  ADJ[e[0]].push({to:e[1], w:w});
+  ADJ[e[1]].push({to:e[0], w:w});
+});
+
+function nearestNode(p){
+  var best = null;
+  NKEYS.forEach(function(k){
+    var d = Math.hypot(NODES[k].x-p.x, NODES[k].z-p.z);
+    if(!best || d < best.d) best = {k:k, d:d};
+  });
+  return best.k;
+}
+function shortestPath(from, to){
+  var dist = {}, prev = {}, seen = {};
+  NKEYS.forEach(function(k){ dist[k] = Infinity; });
+  dist[from] = 0;
+  for(;;){
+    var u = null;
+    NKEYS.forEach(function(k){
+      if(!seen[k] && dist[k] < Infinity && (u === null || dist[k] < dist[u])) u = k;
+    });
+    if(u === null || u === to) break;
+    seen[u] = 1;
+    ADJ[u].forEach(function(e){
+      if(dist[u] + e.w < dist[e.to]){ dist[e.to] = dist[u] + e.w; prev[e.to] = u; }
+    });
+  }
+  var out = [], cur = to;
+  while(cur){ out.unshift(cur); cur = prev[cur]; }
+  return (out[0] === from) ? out : [from, to];
+}
+
+/* ประตูร้าน = จุดบนขอบร้านที่ใกล้ทางเดินที่สุด */
+shops.forEach(function(s){
+  var nk = nearestNode({x:s.cx, z:s.cz});
+  var n = NODES[nk], best = null;
+  for(var i=0;i<4;i++){
+    var a = s.corners[i], b = s.corners[(i+1)%4];
+    var vx = b.x-a.x, vz = b.z-a.z, L2 = vx*vx+vz*vz;
+    var t = Math.max(0, Math.min(1, ((n.x-a.x)*vx + (n.z-a.z)*vz)/L2));
+    var q = {x:a.x+vx*t, z:a.z+vz*t};
+    var d = Math.hypot(n.x-q.x, n.z-q.z);
+    if(!best || d < best.d) best = {d:d, p:q};
+  }
+  s.door = best.p;
+  s.node = nk;
+});
+
+var YOU_NODE = nearestNode(YOU);
 function buildRoute(s){
-  var A = onRing(YOU), B = onRing(s.door);
-  var fwd = ((B.t - A.t) + ringLen) % ringLen;
-  var dir = (fwd <= ringLen - fwd) ? 1 : -1;
-  var span = (dir === 1) ? fwd : ringLen - fwd;
-  var pts = [{x:YOU.x, z:YOU.z}, A.p];
-  var steps = Math.max(1, Math.ceil(span/2));
-  for(var i=1;i<=steps;i++) pts.push(ringPoint(A.t + dir*span*(i/steps)));
+  var keys = shortestPath(YOU_NODE, s.node);
+  var pts = [{x:YOU.x, z:YOU.z}];
+  keys.forEach(function(k){ pts.push({x:NODES[k].x, z:NODES[k].z}); });
   pts.push({x:s.door.x, z:s.door.z});
-  return pts;
+  /* ตัดจุดที่ซ้อนกันออก */
+  var out = [pts[0]];
+  for(var i=1;i<pts.length;i++){
+    var p = pts[i], q = out[out.length-1];
+    if(Math.hypot(p.x-q.x, p.z-q.z) > 0.6) out.push(p);
+  }
+  return out;
 }
 function routeLength(r){
   var L = 0;
@@ -407,13 +752,21 @@ function routeLength(r){
 }
 
 /* ==================================================================
-   4. เรนเดอเรอร์ 3 มิติ เขียนเอง บน canvas 2 มิติ
+   5. เรนเดอเรอร์ 3 มิติ เขียนเอง บน canvas 2 มิติ
+      ไม่ใช้ WebGL เพราะมินิพีซีในตู้ห้างมักไม่มีการ์ดจอ
    ================================================================== */
 var cv = $("view"), ctx = cv.getContext("2d"), W=0, H=0;
-/* yaw = PI คือกล้องยืนอยู่ฝั่งเดียวกับตู้ มองเข้าไปในห้อง
-   จุด 'คุณอยู่ตรงนี้' จะอยู่ล่างสุดของจอเสมอ ตามหลักป้ายบอกทาง */
-var cam = {tx:26, tz:20, yaw:Math.PI, pitch:0.72, dist:82};
-var HOME = {tx:26, tz:20, yaw:Math.PI, pitch:0.72, dist:82};
+
+/* หลักป้ายบอกทาง จุด "คุณอยู่ตรงนี้" ต้องอยู่ล่างสุดของจอเสมอ
+   เวอร์ชันเดิมตรึงไว้ที่ yaw = PI เพราะตู้อยู่ฝั่งนั้นพอดี
+   ผังนี้ตู้ย้ายที่ เลยคำนวณจากตำแหน่งตู้แทน กติกาเดิมจึงบังคับตัวเองได้ */
+var FOCUS = {x:(MX(1500)+MX(2400))/2, z:(MZ(700)+MZ(1400))/2};
+var HOME = {
+  tx:FOCUS.x, tz:FOCUS.z,
+  yaw:Math.atan2(YOU.x - FOCUS.x, YOU.z - FOCUS.z),
+  pitch:0.74, dist:186
+};
+var cam = {tx:HOME.tx, tz:HOME.tz, yaw:HOME.yaw, pitch:HOME.pitch, dist:HOME.dist};
 var FOV = 0.8;
 var eye={x:0,y:0,z:0}, bx={}, by={}, bz={}, focal=1;
 
@@ -433,7 +786,7 @@ function updateCam(){
   eye.z = cam.tz + cam.dist*cp*Math.cos(cam.yaw);
   var fx = cam.tx-eye.x, fy = -eye.y, fz = cam.tz-eye.z, fl = Math.hypot(fx,fy,fz);
   bz.x=fx/fl; bz.y=fy/fl; bz.z=fz/fl;
-  bx.x = -bz.z; bx.y = 0; bx.z = bz.x;   /* = cross(forward, worldUp) */
+  bx.x = -bz.z; bx.y = 0; bx.z = bz.x;   /* = cross(forward, worldUp) — อย่าสลับเครื่องหมาย ภาพจะกลับหัว */
   var rl = Math.hypot(bx.x,bx.z)||1; bx.x/=rl; bx.z/=rl;
   by.x = bx.y*bz.z - bx.z*bz.y;
   by.y = bx.z*bz.x - bx.x*bz.z;
@@ -455,427 +808,451 @@ function poly(pts, fill, stroke, lw){
   if(fill){ ctx.fillStyle=fill; ctx.fill(); }
   if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=lw||1; ctx.stroke(); }
 }
+function ground(list, y){
+  return list.map(function(p){ return P(p.x, y||0, p.z); });
+}
 
 /* ==================================================================
-   5. สถานะ
+   6. สถานะ
    ================================================================== */
-var selected = null, sub = "", route = null, walker = null, idleSpin = false;
-var flying = null;
+var selected = null, cat = "", query = "", route = null, walker = null;
+var idleSpin = false, idleTimer = null, flying = null, t0 = performance.now();
 
-function centerOf(s){ return {x:s.x+s.w/2, z:s.z+s.d/2}; }
-function visible(s){ return !sub || s.sub === sub; }
+function visible(s){
+  if(cat && s.cat !== cat) return false;
+  if(query){
+    var q = query.toLowerCase();
+    var hay = (s.name + " " + s.desc + " " + s.no + " " + (CATNAME[s.cat]||"")).toLowerCase();
+    if(hay.indexOf(q) < 0) return false;
+  }
+  return true;
+}
 
 /* ==================================================================
-   6. วาดภาพ
+   7. วาดภาพ
    ================================================================== */
 function draw(){
-  if(idleSpin) cam.yaw += 0.0016;
+  var now = performance.now(), t = (now - t0) / 1000;
+  if(idleSpin) cam.yaw += 0.0013;
   if(flying) stepFly();
   shops.forEach(function(s){
-    var target = (selected === s) ? 1 : 0;
-    s.pop += (target - s.pop) * 0.16;
+    s.pop += (((selected === s) ? 1 : 0) - s.pop) * 0.16;
   });
 
   updateCam();
   ctx.clearRect(0,0,W,H);
 
-  /* พื้นห้อง */
-  poly([P(-2,0,-2),P(HALL.x1+2,0,-2),P(HALL.x1+2,0,HALL.z1+2),P(-2,0,HALL.z1+2)],
-       "#E7E8EA", "rgba(32,36,42,.16)", 1);
-  /* โซนที่นั่งตรงกลาง */
-  poly([P(SEAT.x0,0.02,SEAT.z0),P(SEAT.x1,0.02,SEAT.z0),P(SEAT.x1,0.02,SEAT.z1),P(SEAT.x0,0.02,SEAT.z1)],
-       "#DDDFE3", "rgba(32,36,42,.13)", 1);
-  drawSeats();
-  /* แนวทางเดินวน */
-  ctx.save(); ctx.setLineDash([5,7]); ctx.strokeStyle="rgba(32,36,42,.18)"; ctx.lineWidth=1.2;
+  /* พื้นชั้น */
+  poly(ground(PLATE, 0), "#DCD8C7", "rgba(35,35,31,.2)", 1.2);
+
+  /* โถงกลาง เป็นทางเดินกว้างริมช่องเปิด */
+  poly(ground(ATRIUM, 0.02), "#E9E5D6", null);
+  /* ช่องเปิดทะลุชั้นล่าง วาดเป็นหลุมเข้ม ให้อ่านออกว่าตรงนี้ไม่มีพื้น */
+  poly(ground(VOID, 0.03), "rgba(35,35,31,.30)", "rgba(35,35,31,.42)", 1.4);
+  /* ราวกันตกรอบช่องเปิด */
+  ctx.save(); ctx.strokeStyle = "rgba(35,35,31,.26)"; ctx.lineWidth = 1;
+  for(var vi=0; vi<VOID.length; vi++){
+    var a = VOID[vi], b = VOID[(vi+1)%VOID.length];
+    var a0 = P(a.x,0,a.z), a1 = P(a.x,1.1,a.z), b0 = P(b.x,0,b.z), b1 = P(b.x,1.1,b.z);
+    if(a0&&a1&&b0&&b1){
+      ctx.beginPath(); ctx.moveTo(a1.x,a1.y); ctx.lineTo(b1.x,b1.y); ctx.stroke();
+    }
+  }
+  ctx.restore();
+
+  /* พื้นที่สีเขียว */
+  GREEN.forEach(function(g){ poly(ground(g, 0.04), "#C6D5C9", "rgba(35,35,31,.12)", 1); });
+  drawTrees();
+
+  /* แกนสายตาหลักที่ผังตีเส้นประไว้ */
+  ctx.save(); ctx.setLineDash([4,9]); ctx.strokeStyle = "rgba(192,112,63,.34)"; ctx.lineWidth = 1.1;
   ctx.beginPath();
-  RING.forEach(function(p,i){ var q=P(p.x,0.03,p.z); if(!q) return; i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); });
-  ctx.closePath(); ctx.stroke(); ctx.restore();
+  AXIS.forEach(function(p,i){ var q = P(p.x,0.06,p.z); if(!q) return; i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); });
+  ctx.stroke(); ctx.restore();
+
+  drawLED(t);
 
   if(route) drawRoute();
 
-  /* เรียงร้านจากไกลไปใกล้ */
+  /* เรียงจากไกลไปใกล้ แล้ววาดทับกัน */
   var order = shops.map(function(s){
-    var c = centerOf(s);
-    return {s:s, d:(c.x-eye.x)*(c.x-eye.x)+(c.z-eye.z)*(c.z-eye.z)};
+    return {s:s, d:(s.cx-eye.x)*(s.cx-eye.x)+(s.cz-eye.z)*(s.cz-eye.z)};
   }).sort(function(a,b){ return b.d - a.d; });
 
   var labels = [];
   order.forEach(function(o){ drawShop(o.s, labels); });
 
-  drawYou();
+  drawEntrances();
+  drawYou(t);
   if(walker) drawWalker();
   labels.sort(function(a,b){ return b.z-a.z; }).forEach(drawLabel);
 }
 
-function drawSeats(){
-  /* โต๊ะกลมเตี้ยๆ ในโซนที่นั่ง สร้างจากกริดคงที่ */
+function drawTrees(){
+  TREES.forEach(function(p){
+    var c = P(p.x, 2.6, p.z); if(!c) return;
+    var r = Math.max(2, 118/c.z);
+    var st = P(p.x, 0, p.z);
+    if(st){
+      ctx.strokeStyle = "rgba(35,35,31,.3)"; ctx.lineWidth = Math.max(.8, r*0.16);
+      ctx.beginPath(); ctx.moveTo(st.x, st.y); ctx.lineTo(c.x, c.y); ctx.stroke();
+    }
+    ctx.fillStyle = "rgba(122,150,128,.78)";
+    ctx.beginPath(); ctx.ellipse(c.x, c.y, r, r*0.82, 0, 0, 6.2832); ctx.fill();
+  });
+}
+
+/* จอ LED บนพื้น — ของจริงในผัง เป็นจุดเดียวในภาพที่มีสีจัดและเคลื่อนไหว */
+function drawLED(t){
+  var p = ground(LED, 0.05);
+  for(var i=0;i<p.length;i++) if(!p[i]) return;
+  var xs = p.map(function(q){ return q.x; }), ys = p.map(function(q){ return q.y; });
+  var x0 = Math.min.apply(null,xs), x1 = Math.max.apply(null,xs);
+  var y0 = Math.min.apply(null,ys), y1 = Math.max.apply(null,ys);
+  var g = ctx.createLinearGradient(x0, y0, x1, y1);
+  var k = (t * 0.06) % 1;
+  function hue(o){ return "hsl(" + Math.round(((k+o)%1)*360) + ",62%,72%)"; }
+  g.addColorStop(0, hue(0)); g.addColorStop(.33, hue(.18));
+  g.addColorStop(.66, hue(.42)); g.addColorStop(1, hue(.66));
   ctx.save();
-  for(var gx=0; gx<5; gx++) for(var gz=0; gz<3; gz++){
-    var x = SEAT.x0 + 3 + gx*4.8, z = SEAT.z0 + 2.6 + gz*4.2;
-    var c = P(x, 0.75, z); if(!c) continue;
-    var r = Math.max(1.6, 62/c.z);
-    ctx.fillStyle = "rgba(32,36,42,.13)";
-    ctx.beginPath(); ctx.ellipse(c.x, c.y, r, r*0.5, 0, 0, 6.2832); ctx.fill();
-  }
+  ctx.globalAlpha = 0.9;
+  poly(p, g, null);
+  /* แสงสะท้อนบนพื้นรอบจอ */
+  ctx.globalAlpha = 0.16;
+  var cxp = (x0+x1)/2, cyp = (y0+y1)/2;
+  var rg = ctx.createRadialGradient(cxp, cyp, 0, cxp, cyp, Math.max(x1-x0, y1-y0)*0.75);
+  rg.addColorStop(0, hue(.2)); rg.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = rg;
+  ctx.beginPath(); ctx.ellipse(cxp, cyp, (x1-x0)*0.85, (y1-y0)*1.1, 0, 0, 6.2832); ctx.fill();
   ctx.restore();
 }
 
 function drawShop(s, labels){
   var vis = visible(s), sel = (selected === s);
-  var lift = s.pop * 1.5;
-  var y = (vis ? s.h : s.h*0.4) + lift;
-  var x0=s.x, x1=s.x+s.w, z0=s.z, z1=s.z+s.d;
-  var t = [P(x0,y,z0),P(x1,y,z0),P(x1,y,z1),P(x0,y,z1)];
-  var b = [P(x0,0,z0),P(x1,0,z0),P(x1,0,z1),P(x0,0,z1)];
+  var lift = s.pop * 2.2;
+  var y = (vis ? s.h : s.h*0.42) + lift;
+  var c = s.corners;
+  var top = [P(c[0].x,y,c[0].z),P(c[1].x,y,c[1].z),P(c[2].x,y,c[2].z),P(c[3].x,y,c[3].z)];
+  var bot = [P(c[0].x,0,c[0].z),P(c[1].x,0,c[1].z),P(c[2].x,0,c[2].z),P(c[3].x,0,c[3].z)];
 
-  ctx.globalAlpha = vis ? 1 : 0.3;
+  ctx.globalAlpha = vis ? 1 : 0.26;
 
-  var faces = [[0,1],[1,2],[2,3],[3,0]];
-  var nrm = [{x:0,z:-1},{x:1,z:0},{x:0,z:1},{x:-1,z:0}];
-  var c = centerOf(s);
-  faces.forEach(function(f,i){
-    if(nrm[i].x*(eye.x-c.x) + nrm[i].z*(eye.z-c.z) <= 0) return;
-    var lit = 0.5 + 0.5*Math.abs(nrm[i].x*0.7 + nrm[i].z*0.3);
-    var base = sel ? [64,71,80] : [206,210,216];
-    var k = lit;
-    poly([b[f[0]],b[f[1]],t[f[1]],t[f[0]]],
-      "rgb("+Math.round(base[0]*k)+","+Math.round(base[1]*k)+","+Math.round(base[2]*k)+")",
-      "rgba(0,0,0,.45)", 1);
-  });
-  /* หลังคา */
-  poly(t, sel ? "#262B31" : "#F3F4F6", sel ? "#FFFFFF" : "rgba(32,36,42,.22)", sel ? 2 : 1);
+  for(var i=0;i<4;i++){
+    var a = c[i], b = c[(i+1)%4];
+    var nx = -(b.z - a.z), nz = (b.x - a.x);
+    var nl = Math.hypot(nx,nz)||1; nx/=nl; nz/=nl;
+    if(nx*(eye.x-s.cx) + nz*(eye.z-s.cz) <= 0) continue;       /* หันหลังให้กล้อง ไม่ต้องวาด */
+    var lit = 0.62 + 0.38*Math.abs(nx*0.78 + nz*0.34);
+    var base = sel ? [58,58,52] : [232,216,180];
+    poly([bot[i],bot[(i+1)%4],top[(i+1)%4],top[i]],
+      "rgb("+Math.round(base[0]*lit)+","+Math.round(base[1]*lit)+","+Math.round(base[2]*lit)+")",
+      "rgba(35,35,31,.38)", 1);
+  }
+  /* หลังคา ใช้สีเดียวกับกล่องยูนิตในผังสถาปนิก */
+  poly(top, sel ? "#23231F" : "#F2DEB6", sel ? "#F7F4EA" : "rgba(35,35,31,.26)", sel ? 2 : 1);
 
-  /* ประตูร้าน */
-  if(vis){
-    var dw = 2.0, dd = s.door;
-    var along = (s.w > s.d) ? "x" : "z";
-    var p1,p2;
-    if(along === "x"){ p1 = {x:dd.x-dw/2, z:dd.z}; p2 = {x:dd.x+dw/2, z:dd.z}; }
-    else             { p1 = {x:dd.x, z:dd.z-dw/2}; p2 = {x:dd.x, z:dd.z+dw/2}; }
-    poly([P(p1.x,0,p1.z),P(p2.x,0,p2.z),P(p2.x,2.1,p2.z),P(p1.x,2.1,p1.z)],
-         "rgba(32,36,42,.09)","rgba(32,36,42,.3)",1);
+  /* ปากทางเข้าร้าน */
+  if(vis && s.door){
+    var d0 = P(s.door.x, 0, s.door.z), d1 = P(s.door.x, 2.6, s.door.z);
+    if(d0 && d1){
+      ctx.strokeStyle = sel ? "rgba(192,112,63,.9)" : "rgba(35,35,31,.28)";
+      ctx.lineWidth = sel ? 2.4 : 1.2;
+      ctx.beginPath(); ctx.moveTo(d0.x,d0.y); ctx.lineTo(d1.x,d1.y); ctx.stroke();
+    }
   }
   ctx.globalAlpha = 1;
 
-  if(vis){
-    var top = P(c.x, y+0.5, c.z);
-    if(top) labels.push({p:top, s:s, sel:sel, z:top.z});
+  if(sel){
+    var lp = P(s.cx, y + 5.2, s.cz);
+    if(lp) labels.push({x:lp.x, y:lp.y, z:lp.z, name:s.name, no:s.no});
   }
 }
 
 function drawLabel(l){
-  var size = Math.max(6.5, Math.min(13, 300/l.p.z));
-  if(size < 8 && !l.sel) return;
-  var fs = l.sel ? size*1.3 : size;
-  ctx.font = "300 " + fs + "px Prompt, sans-serif";
-  var txt = l.s.name.length > 14 ? l.s.name.slice(0,13)+"…" : l.s.name;
-  var w = ctx.measureText(txt).width, h = fs*1.9;
-  var rx = l.p.x-w/2-7, ry = l.p.y-h/2;
-  ctx.fillStyle = l.sel ? "rgba(32,36,42,.95)" : "rgba(255,255,255,.9)";
+  ctx.save();
+  ctx.font = "400 " + Math.max(11, Math.min(19, 620/l.z)) + "px " + "Prompt, sans-serif";
+  var w = ctx.measureText(l.name).width;
+  var padx = 11, h = 27;
+  ctx.fillStyle = "#23231F";
   ctx.beginPath();
-  ctx.moveTo(rx+2, ry); ctx.lineTo(rx+w+12, ry);
-  ctx.lineTo(rx+w+14, ry+h/2); ctx.lineTo(rx+w+12, ry+h);
-  ctx.lineTo(rx+2, ry+h); ctx.lineTo(rx, ry+h/2); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = l.sel ? "rgba(255,255,255,.85)" : "rgba(32,36,42,.16)"; ctx.lineWidth=1; ctx.stroke();
-  ctx.fillStyle = l.sel ? "#FFFFFF" : "rgba(32,36,42,.82)";
-  ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText(txt, l.p.x, l.p.y+0.5);
+  if(ctx.roundRect) ctx.roundRect(l.x - w/2 - padx, l.y - h, w + padx*2, h, 13);
+  else ctx.rect(l.x - w/2 - padx, l.y - h, w + padx*2, h);
+  ctx.fill();
+  ctx.fillStyle = "#F7F4EA"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(l.name, l.x, l.y - h/2 + 1);
+  /* เข็มชี้ลงไปที่ตึก */
+  ctx.strokeStyle = "#23231F"; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(l.x, l.y); ctx.lineTo(l.x, l.y + 9); ctx.stroke();
+  ctx.restore();
+}
+
+function drawEntrances(){
+  DOORS.forEach(function(d){
+    var a = P(d.p.x, 0.4, d.p.z);
+    var b = P(d.p.x + d.n.x*4.6, 0.4, d.p.z + d.n.z*4.6);
+    if(!a || !b) return;
+    ctx.save();
+    ctx.strokeStyle = "rgba(35,35,31,.42)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    var ang = Math.atan2(b.y-a.y, b.x-a.x), s = 5.5;
+    ctx.fillStyle = "rgba(35,35,31,.42)";
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - s*Math.cos(ang-0.45), b.y - s*Math.sin(ang-0.45));
+    ctx.lineTo(b.x - s*Math.cos(ang+0.45), b.y - s*Math.sin(ang+0.45));
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  });
 }
 
 function drawRoute(){
   ctx.save();
-  ctx.strokeStyle = "rgba(32,36,42,.72)"; ctx.lineWidth = 2.6;
-  ctx.lineJoin="round"; ctx.lineCap="round";
-  ctx.setLineDash([7,6]); ctx.lineDashOffset = -(Date.now()/70)%13;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(192,112,63,.24)"; ctx.lineWidth = 9;
+  strokeRoute();
+  ctx.strokeStyle = "#C0703F"; ctx.lineWidth = 3;
+  strokeRoute();
+  ctx.restore();
+}
+function strokeRoute(){
   ctx.beginPath();
-  var on = false;
+  var started = false;
   route.forEach(function(p){
-    var q = P(p.x,0.1,p.z); if(!q) return;
-    on ? ctx.lineTo(q.x,q.y) : (ctx.moveTo(q.x,q.y), on=true);
+    var q = P(p.x, 0.12, p.z); if(!q) return;
+    if(started) ctx.lineTo(q.x, q.y); else { ctx.moveTo(q.x, q.y); started = true; }
   });
-  ctx.stroke(); ctx.restore();
+  ctx.stroke();
 }
 
-function drawYou(){
-  var p = P(YOU.x,0,YOU.z); if(!p) return;
-  var r = Math.max(3.5, 190/p.z);
-  var pulse = 1 + 0.32*Math.sin(Date.now()/520);
+function drawYou(t){
+  var base = P(YOU.x, 0, YOU.z), tip = P(YOU.x, 7.2, YOU.z);
+  if(!base || !tip) return;
+  var pulse = 1 + Math.sin(t*1.7)*0.16;
   ctx.save();
-  ctx.strokeStyle="rgba(32,36,42,.3)"; ctx.lineWidth=1.4;
-  ctx.beginPath(); ctx.ellipse(p.x,p.y,r*2.4*pulse,r*1.1*pulse,0,0,6.2832); ctx.stroke();
-  ctx.fillStyle="#262B31";
-  ctx.beginPath(); ctx.arc(p.x,p.y-r*0.6,r*0.62,0,6.2832); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(p.x-r*0.62,p.y-r*0.6); ctx.lineTo(p.x+r*0.62,p.y-r*0.6);
-  ctx.lineTo(p.x,p.y+r*0.5); ctx.closePath(); ctx.fill();
-  ctx.fillStyle="rgba(32,36,42,.78)";
-  ctx.font="300 "+Math.max(8,r*1.5)+"px Prompt, sans-serif";
-  ctx.textAlign="center"; ctx.textBaseline="bottom";
-  ctx.fillText("คุณอยู่ตรงนี้", p.x, p.y - r*2.6);
+  /* วงกระเพื่อมที่พื้น */
+  ctx.strokeStyle = "rgba(192,112,63,.34)"; ctx.lineWidth = 1.6;
+  var r = Math.max(6, 210/base.z) * pulse;
+  ctx.beginPath(); ctx.ellipse(base.x, base.y, r, r*0.44, 0, 0, 6.2832); ctx.stroke();
+  /* ก้าน */
+  ctx.strokeStyle = "#C0703F"; ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+  /* หัวหมุด */
+  ctx.fillStyle = "#C0703F";
+  ctx.beginPath(); ctx.arc(tip.x, tip.y, Math.max(4.4, 108/tip.z), 0, 6.2832); ctx.fill();
+  ctx.fillStyle = "#EDE9DA";
+  ctx.beginPath(); ctx.arc(tip.x, tip.y, Math.max(1.7, 42/tip.z), 0, 6.2832); ctx.fill();
   ctx.restore();
 }
 
 function drawWalker(){
-  var p = P(walker.x,0,walker.z); if(!p) return;
-  var s = Math.max(4, 210/p.z);
+  var p = P(walker.p.x, 1.1, walker.p.z); if(!p) return;
   ctx.save();
-  ctx.fillStyle="rgba(32,36,42,.2)";
-  ctx.beginPath(); ctx.ellipse(p.x,p.y,s*0.62,s*0.24,0,0,6.2832); ctx.fill();
-  ctx.fillStyle="#262B31";
-  ctx.beginPath();
-  ctx.moveTo(p.x-s*0.3, p.y);
-  ctx.lineTo(p.x-s*0.22, p.y-s*1.5);
-  ctx.lineTo(p.x+s*0.22, p.y-s*1.5);
-  ctx.lineTo(p.x+s*0.3, p.y);
-  ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.arc(p.x, p.y-s*1.85, s*0.36, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = "#23231F";
+  ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(3.2, 74/p.z), 0, 6.2832); ctx.fill();
   ctx.restore();
 }
 
 /* ==================================================================
-   7. กล้องบินไปหาร้าน
+   8. กล้องบินไปหาร้าน
    ================================================================== */
 function flyTo(s){
-  var c = centerOf(s);
-  /* หันกล้องให้มองจากกลางห้องออกไปทางร้าน จะได้เห็นหน้าร้าน */
-  var yaw = Math.atan2(c.x - 26, c.z - 20) + Math.PI;
-  flying = {
-    t0: performance.now(), dur: 900,
-    from: {tx:cam.tx, tz:cam.tz, yaw:cam.yaw, pitch:cam.pitch, dist:cam.dist},
-    to:   {tx:(c.x+26)/2, tz:(c.z+20)/2, yaw:yaw, pitch:0.62, dist:58}
-  };
-  /* เลือกทางหมุนที่สั้นที่สุด */
-  var d = flying.to.yaw - flying.from.yaw;
+  var yaw = Math.atan2(s.cx - FOCUS.x, s.cz - FOCUS.z);
+  /* เลือกทิศหมุนที่สั้นกว่า */
+  var d = yaw - cam.yaw;
   while(d >  Math.PI) d -= Math.PI*2;
   while(d < -Math.PI) d += Math.PI*2;
-  flying.to.yaw = flying.from.yaw + d;
+  flying = {
+    t:0,
+    from:{tx:cam.tx, tz:cam.tz, yaw:cam.yaw, pitch:cam.pitch, dist:cam.dist},
+    to:  {tx:s.cx,   tz:s.cz,   yaw:cam.yaw + d, pitch:0.58, dist:62}
+  };
+}
+function flyHome(){
+  var d = HOME.yaw - cam.yaw;
+  while(d >  Math.PI) d -= Math.PI*2;
+  while(d < -Math.PI) d += Math.PI*2;
+  flying = {
+    t:0,
+    from:{tx:cam.tx, tz:cam.tz, yaw:cam.yaw, pitch:cam.pitch, dist:cam.dist},
+    to:  {tx:HOME.tx, tz:HOME.tz, yaw:cam.yaw + d, pitch:HOME.pitch, dist:HOME.dist}
+  };
 }
 function stepFly(){
-  var k = (performance.now() - flying.t0)/flying.dur;
-  if(k >= 1) k = 1;
-  var e = 1 - Math.pow(1-k, 3);
-  ["tx","tz","yaw","pitch","dist"].forEach(function(p){
-    cam[p] = flying.from[p] + (flying.to[p]-flying.from[p])*e;
-  });
-  if(k >= 1) flying = null;
+  flying.t += 0.028;
+  var k = flying.t >= 1 ? 1 : 1 - Math.pow(1 - flying.t, 3);
+  var f = flying.from, g = flying.to;
+  cam.tx = f.tx + (g.tx-f.tx)*k;
+  cam.tz = f.tz + (g.tz-f.tz)*k;
+  cam.yaw = f.yaw + (g.yaw-f.yaw)*k;
+  cam.pitch = f.pitch + (g.pitch-f.pitch)*k;
+  cam.dist = f.dist + (g.dist-f.dist)*k;
+  if(flying.t >= 1) flying = null;
+}
+
+/* คนเดินตามเส้นทาง */
+function startWalker(){
+  if(!route || route.length < 2){ walker = null; return; }
+  walker = {i:0, t:0, p:{x:route[0].x, z:route[0].z}};
+}
+function stepWalker(){
+  if(!walker || !route) return;
+  var a = route[walker.i], b = route[walker.i+1];
+  if(!b){ walker.i = 0; walker.t = 0; return; }
+  var L = Math.hypot(b.x-a.x, b.z-a.z) || 1;
+  walker.t += 0.42 / L;
+  if(walker.t >= 1){ walker.t = 0; walker.i++; if(walker.i >= route.length-1) walker.i = 0; return; }
+  walker.p = {x:a.x + (b.x-a.x)*walker.t, z:a.z + (b.z-a.z)*walker.t};
 }
 
 /* ==================================================================
-   8. เดินนำทาง
+   9. หน้าจอส่วนล่าง
    ================================================================== */
-var walkTimer = null;
-function startWalk(){
-  if(!selected) return;
-  route = buildRoute(selected);
-  var segs = [], total = 0, i;
-  for(i=0;i<route.length-1;i++){
-    var L = Math.hypot(route[i+1].x-route[i].x, route[i+1].z-route[i].z);
-    segs.push(L); total += L;
-  }
-  var t0 = performance.now(), speed = 8;
-  var go = $("dGo"); go.classList.add("walking"); go.textContent = "กำลังนำทาง";
-  clearInterval(walkTimer);
-  walkTimer = setInterval(function(){
-    var d = (performance.now()-t0)/1000*speed;
-    if(d >= total){
-      walker = route[route.length-1];
-      clearInterval(walkTimer);
-      go.classList.remove("walking"); go.textContent = "นำทางอีกครั้ง";
-      return;
-    }
-    var acc = 0;
-    for(i=0;i<segs.length;i++){
-      if(d <= acc+segs[i]){
-        var t = segs[i] ? (d-acc)/segs[i] : 0;
-        walker = { x: route[i].x+(route[i+1].x-route[i].x)*t,
-                   z: route[i].z+(route[i+1].z-route[i].z)*t };
-        break;
-      }
-      acc += segs[i];
-    }
-  }, 1000/30);
-}
-
-/* ==================================================================
-   9. แตะและลากบนแผนผัง
-   ================================================================== */
-function inPoly(px,py,pts){
-  var inside=false;
-  for(var i=0,j=pts.length-1;i<pts.length;j=i++){
-    if(!pts[i]||!pts[j]) return false;
-    if((pts[i].y>py)!==(pts[j].y>py) &&
-       px < (pts[j].x-pts[i].x)*(py-pts[i].y)/(pts[j].y-pts[i].y)+pts[i].x) inside=!inside;
-  }
-  return inside;
-}
-function pick(px,py){
-  updateCam();
-  var best=null, bz2=1e9;
-  shops.forEach(function(s){
-    if(!visible(s)) return;
-    var y = s.h + s.pop*1.5;
-    var t = [P(s.x,y,s.z),P(s.x+s.w,y,s.z),P(s.x+s.w,y,s.z+s.d),P(s.x,y,s.z+s.d)];
-    if(inPoly(px,py,t)){
-      var zz=(t[0].z+t[2].z)/2;
-      if(zz<bz2){ bz2=zz; best=s; }
-    }
-  });
-  return best;
-}
-var drag=null, moved=0, pinch=null;
-function xy(e){
-  var r = cv.getBoundingClientRect();
-  var t = e.touches ? e.touches[0] : e;
-  return {x:t.clientX-r.left, y:t.clientY-r.top};
-}
-function down(e){
-  stopIdle();
-  if(e.touches && e.touches.length===2){
-    pinch = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-    drag=null; return;
-  }
-  drag = xy(e); moved = 0;
-}
-function move(e){
-  if(pinch && e.touches && e.touches.length===2){
-    var d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
-    cam.dist = Math.max(44, Math.min(120, cam.dist*pinch/d)); pinch = d;
-    e.preventDefault(); return;
-  }
-  if(!drag) return;
-  var p = xy(e), dx = p.x-drag.x, dy = p.y-drag.y;
-  moved += Math.abs(dx)+Math.abs(dy);
-  flying = null;
-  cam.yaw -= dx*0.006;
-  cam.pitch = Math.max(0.3, Math.min(1.3, cam.pitch + dy*0.004));
-  drag = p; e.preventDefault();
-  $("hint").classList.add("hide");
-}
-function up(e){
-  if(pinch){ pinch=null; return; }
-  if(drag && moved < 8){
-    var t = e.changedTouches ? e.changedTouches[0] : e;
-    var r = cv.getBoundingClientRect();
-    var s = pick(t.clientX-r.left, t.clientY-r.top);
-    if(s) select(s); else closeDetail();
-  }
-  drag = null;
-}
-cv.addEventListener("mousedown",down); cv.addEventListener("mousemove",move);
-window.addEventListener("mouseup",up);
-cv.addEventListener("touchstart",down,{passive:false});
-cv.addEventListener("touchmove",move,{passive:false});
-cv.addEventListener("touchend",up);
-cv.addEventListener("wheel",function(e){
-  stopIdle(); flying=null;
-  cam.dist = Math.max(44, Math.min(120, cam.dist + e.deltaY*0.06));
-  e.preventDefault();
-},{passive:false});
-
-/* ==================================================================
-   10. ส่วนติดต่อผู้ใช้
-   ================================================================== */
-function renderCats(){
-  $("cats").innerHTML = CATEGORIES.map(function(c){
-    return '<button class="ct'+(c.ready?" on":" soon")+'" data-cat="'+c.id+'">' +
-           c.name + '<b>' + (c.ready ? TENANTS.length + " ร้าน" : "เร็วๆ นี้") + '</b></button>';
-  }).join("");
-}
-function renderSubs(){
-  $("subs").innerHTML = SUBS.map(function(s){
-    var n = s.id ? shops.filter(function(x){ return x.sub===s.id; }).length : shops.length;
-    return '<button class="sb'+(sub===s.id?" on":"")+'" data-sub="'+s.id+'">'+s.name+' · '+n+'</button>';
-  }).join("");
-}
-function renderGrid(){
-  $("grid").innerHTML = shops.filter(visible).map(function(s){
-    return '<button class="card'+(selected===s?" on":"")+'" data-i="'+s.idx+'">' +
-             '<span class="mono">'+s.mono+'</span>' +
-             '<span class="rule"></span>' +
-             '<span class="nm">'+s.name+'</span>' +
+function renderFloors(){
+  $("floors").innerHTML = FLOORS.map(function(f){
+    var cls = "fl" + (f.ready ? (f.lvl === "1" ? " on" : "") : " off");
+    return '<button class="' + cls + '" data-lvl="' + f.lvl + '">' +
+             '<span class="n">L' + f.lvl + '</span>' +
+             '<span class="z">' + (f.ready ? f.zone : "เร็วๆ นี้") + '</span>' +
            '</button>';
   }).join("");
-}
-function select(s){
-  selected = s; route = null; walker = null; clearInterval(walkTimer);
-  stopIdle(); flyTo(s);
-  $("dMono").textContent = s.mono;
-  $("dName").textContent = s.name;
-  $("dKind").textContent = SUBNAME[s.sub] || "";
-  $("dDesc").textContent = s.desc;
-  $("dUnit").textContent = s.unit;
-  $("dHours").textContent = "10.00–21.00";
-  $("dDist").textContent = Math.round(routeLength(buildRoute(s))) + " ม.";
-  var g = $("dGo"); g.classList.remove("walking"); g.textContent = "นำทางไปยังร้าน";
-  $("detail").classList.add("on");
-  $("hint").classList.add("hide");
-  renderGrid();
-  var el = $("grid").querySelector('[data-i="'+s.idx+'"]');
-  if(el) el.scrollIntoView({block:"nearest", behavior:"smooth"});
-}
-function closeDetail(){
-  selected = null; route = null; walker = null; clearInterval(walkTimer);
-  $("detail").classList.remove("on");
-  renderGrid();
-}
-var toastTimer = null;
-function toast(msg){
-  var t = $("toast"); t.textContent = msg; t.classList.add("on");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ t.classList.remove("on"); }, 2200);
+  Array.prototype.forEach.call($("floors").children, function(b){
+    b.addEventListener("click", function(){
+      if(b.className.indexOf("off") >= 0){ toast("ชั้นนี้ยังไม่เปิดใช้งาน"); return; }
+    });
+  });
 }
 
-$("cats").addEventListener("click", function(e){
-  var t = e.target.closest("[data-cat]"); if(!t) return;
-  var c = CATEGORIES.filter(function(x){ return x.id === t.getAttribute("data-cat"); })[0];
-  if(!c.ready){ toast("หมวด " + c.name + " กำลังจัดทำข้อมูล"); return; }
+function renderCats(){
+  $("cats").innerHTML = CATS.map(function(c){
+    return '<button class="cat' + (c.id === cat ? " on" : "") + '" data-cat="' + c.id + '">' + c.name + '</button>';
+  }).join("");
+  Array.prototype.forEach.call($("cats").children, function(b){
+    b.addEventListener("click", function(){
+      cat = b.getAttribute("data-cat");
+      renderCats(); renderGrid(); kick();
+    });
+  });
+}
+
+function renderGrid(){
+  var list = shops.filter(visible).sort(function(a,b){ return a.no.localeCompare(b.no); });
+  if(!list.length){
+    $("grid").innerHTML = '<div class="empty">ไม่พบร้านที่ตรงกับที่ค้นหา<br>ลองคำสั้นลง หรือเลือกจากหมวดด้านบน</div>';
+    return;
+  }
+  $("grid").innerHTML = list.map(function(s){
+    return '<button class="card' + (selected === s ? " on" : "") + '" data-no="' + s.no + '">' +
+             '<div class="mono">' + s.mono + '</div>' +
+             '<div class="cname">' + s.name + '</div>' +
+             '<div class="cunit">' + s.no + '</div>' +
+           '</button>';
+  }).join("");
+  Array.prototype.forEach.call($("grid").children, function(b){
+    if(!b.getAttribute) return;
+    b.addEventListener("click", function(){
+      var no = b.getAttribute("data-no");
+      select(shops.filter(function(s){ return s.no === no; })[0]);
+    });
+  });
+}
+
+function select(s){
+  if(!s) return;
+  selected = s;
+  route = buildRoute(s);
+  startWalker();
+  flyTo(s);
+  $("dMono").textContent = s.mono;
+  $("dName").textContent = s.name;
+  $("dKind").textContent = CATNAME[s.cat] || "";
+  $("dDesc").textContent = s.desc;
+  $("dUnit").textContent = s.no;
+  $("dArea").textContent = s.area.toFixed(0) + " ตร.ม.";
+  $("dDist").textContent = Math.round(routeLength(route)) + " ม.";
+  $("detail").className = "detail on";
+  renderGrid();
+  kick();
+}
+function deselect(){
+  selected = null; route = null; walker = null;
+  $("detail").className = "detail";
+  flyHome(); renderGrid(); kick();
+}
+
+function toast(msg){
+  var t = $("toast");
+  t.textContent = msg; t.className = "toast on";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function(){ t.className = "toast"; }, 2200);
+}
+
+/* ==================================================================
+   10. การแตะและลาก
+   ================================================================== */
+var drag = null;
+cv.addEventListener("pointerdown", function(e){
+  drag = {x:e.clientX, y:e.clientY, moved:0};
+  cv.setPointerCapture(e.pointerId); kick();
 });
-$("subs").addEventListener("click", function(e){
-  var t = e.target.closest("[data-sub]"); if(!t) return;
-  sub = t.getAttribute("data-sub");
-  if(selected && !visible(selected)) closeDetail();
-  renderSubs(); renderGrid();
+cv.addEventListener("pointermove", function(e){
+  if(!drag) return;
+  var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag.moved += Math.abs(dx) + Math.abs(dy);
+  cam.yaw -= dx * 0.0072;
+  cam.pitch = Math.max(0.28, Math.min(1.24, cam.pitch + dy * 0.0042));
+  drag.x = e.clientX; drag.y = e.clientY;
+  flying = null;
 });
-$("grid").addEventListener("click", function(e){
-  var t = e.target.closest("[data-i]"); if(!t) return;
-  select(shops[parseInt(t.getAttribute("data-i"),10)]);
+cv.addEventListener("pointerup", function(){ drag = null; });
+cv.addEventListener("pointercancel", function(){ drag = null; });
+
+$("rotL").addEventListener("click", function(){ cam.yaw -= 0.42; flying = null; kick(); });
+$("rotR").addEventListener("click", function(){ cam.yaw += 0.42; flying = null; kick(); });
+$("home").addEventListener("click", function(){ deselect(); });
+$("dClose").addEventListener("click", function(){ deselect(); });
+$("dGo").addEventListener("click", function(){
+  if(!selected) return;
+  toast("เส้นทางจากจุดที่คุณอยู่ · " + Math.round(routeLength(route)) + " เมตร");
+  startWalker(); kick();
 });
-$("dClose").addEventListener("click", closeDetail);
-$("dGo").addEventListener("click", startWalk);
-$("rotL").addEventListener("click", function(){ stopIdle(); flying=null; cam.yaw += 0.5; });
-$("rotR").addEventListener("click", function(){ stopIdle(); flying=null; cam.yaw -= 0.5; });
-$("home").addEventListener("click", function(){
-  stopIdle(); closeDetail();
-  flying = {t0:performance.now(), dur:800, from:{tx:cam.tx,tz:cam.tz,yaw:cam.yaw,pitch:cam.pitch,dist:cam.dist}, to:{
-    tx:HOME.tx, tz:HOME.tz, yaw:HOME.yaw, pitch:HOME.pitch, dist:HOME.dist}};
-  $("hint").classList.remove("hide");
+
+$("q").addEventListener("input", function(){
+  query = $("q").value.trim();
+  $("qclear").className = "qclear" + (query ? " on" : "");
+  renderGrid(); kick();
+});
+$("qclear").addEventListener("click", function(){
+  $("q").value = ""; query = ""; $("qclear").className = "qclear";
+  renderGrid(); kick();
 });
 
 /* ==================================================================
-   11. โหมดพักจอ กล้องหมุนช้าๆ ดึงคนเข้ามา
+   11. โหมดดึงคน — ไม่มีคนแตะ 60 วินาที กล้องหมุนรอบชั้นช้าๆ
    ================================================================== */
-var idleTimer = null;
-function stopIdle(){
+function kick(){
   idleSpin = false;
+  $("hint").className = "hint";
   clearTimeout(idleTimer);
   idleTimer = setTimeout(function(){
-    closeDetail(); sub = ""; renderSubs(); renderGrid();
-    cam.pitch = HOME.pitch; cam.dist = HOME.dist; cam.tx = HOME.tx; cam.tz = HOME.tz;
     idleSpin = true;
-    $("hint").classList.remove("hide");
+    $("hint").className = "hint gone";
+    if(selected) deselect();
+    $("q").value = ""; query = ""; cat = "";
+    $("qclear").className = "qclear";
+    renderCats(); renderGrid();
   }, 60000);
 }
-["click","touchstart","mousedown","wheel","keydown"].forEach(function(ev){
-  document.addEventListener(ev, stopIdle, {passive:true});
-});
 
 /* ==================================================================
    12. เริ่มทำงาน
    ================================================================== */
-resize();
-renderCats(); renderSubs(); renderGrid();
-stopIdle();
-(function loop(){ draw(); requestAnimationFrame(loop); })();
+renderFloors(); renderCats(); renderGrid(); resize(); kick();
+setTimeout(function(){ $("hint").className = "hint gone"; }, 7000);
+
+(function loop(){
+  stepWalker();
+  draw();
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
