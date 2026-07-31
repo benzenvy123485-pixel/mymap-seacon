@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ซีคอนสแควร์ — แผนผังร้านค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ==================================================================
+   ซีคอนสแควร์ — ตู้ประชาสัมพันธ์ จอแนวตั้ง 9:16
+   ธีมหรู ถ่านอมน้ำตาล ตัดทองแชมเปญ
+   ------------------------------------------------------------------
+   ครึ่งบน  แผนผัง 3 มิติ เรนเดอร์เองบน canvas 2 มิติ ไม่มี dependency
+   ครึ่งล่าง ตารางโมโนแกรมร้านค้า จิ้มแล้วกล้องบินไปหาร้านนั้น
+   ================================================================== */
+:root{
+  --u: min(1vw, 0.5625dvh);
+  /* ใช้ Prompt ทั้งงาน สร้างลำดับความสำคัญด้วยน้ำหนักและระยะห่างตัวอักษรแทนการสลับฟอนต์ */
+  --f-display:"Prompt","Noto Sans Thai",system-ui,sans-serif;
+  --f-body:"Prompt","Noto Sans Thai",system-ui,sans-serif;
+
+  /* โทนขาว–เงิน แก้สีทั้งงานได้ที่นี่จุดเดียว */
+  --sheet-0:#FBFBFA;
+  --sheet-1:#F1F1EF;
+  --sheet-2:#FFFFFF;
+  --sheet-3:#E9EAEC;
+  --sil-1:#C9CDD3;
+  --sil-2:#9AA1AA;
+  --sil-3:#6B727B;
+  --ink:#20242A;
+  --ink-soft:rgba(32,36,42,.58);
+  --hair:rgba(32,36,42,.13);
+  --slow:cubic-bezier(.22,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#DEDEDC}
+body{
+  font-family:var(--f-body);font-weight:300;color:var(--ink);
+  display:grid;place-items:center;-webkit-user-select:none;user-select:none;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+.stage{
+  position:relative;overflow:hidden;
+  width:min(100vw, calc(100dvh * 9 / 16));
+  height:min(100dvh, calc(100vw * 16 / 9));
+  background:
+    radial-gradient(76% 42% at 50% 20%, #FFFFFF 0%, transparent 66%),
+    linear-gradient(180deg, var(--sheet-0) 0%, var(--sheet-1) 62%);
+}
+.stage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:40;
+  box-shadow:inset 0 0 calc(var(--u)*24) calc(var(--u)*7) rgba(32,36,42,.07);
+}
+
+/* ---------- หัวจอ ---------- */
+.head{
+  position:absolute;top:0;left:0;right:0;height:calc(var(--u)*14);z-index:12;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--hair);
+}
+.head .mark{
+  font-family:var(--f-display);font-weight:300;
+  font-size:calc(var(--u)*3.9);letter-spacing:.46em;text-indent:.46em;
+  color:var(--ink);
+}
+.head .sub{
+  font-size:calc(var(--u)*2.5);letter-spacing:.3em;text-indent:.3em;
+  color:var(--ink-soft);margin-top:calc(var(--u)*.9);font-weight:200;
+}
+
+/* ---------- แผนผัง ---------- */
+#view{
+  position:absolute;top:calc(var(--u)*14);left:0;
+  width:100%;height:calc(var(--u)*78);display:block;z-index:1;
+}
+.maptag{
+  position:absolute;top:calc(var(--u)*17.5);left:calc(var(--u)*5);z-index:6;
+  font-size:calc(var(--u)*2.4);letter-spacing:.26em;color:var(--ink-soft);font-weight:200;
+  pointer-events:none;
+}
+.tools{
+  position:absolute;top:calc(var(--u)*17);right:calc(var(--u)*5);z-index:6;
+  display:flex;flex-direction:column;gap:calc(var(--u)*1.6);
+}
+.tool{
+  width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);border-radius:50%;
+  display:grid;place-items:center;font-size:calc(var(--u)*3.4);
+  border:1px solid var(--hair);color:var(--sil-2);
+  background:rgba(255,255,255,.72);backdrop-filter:blur(4px);
+  transition:.3s var(--slow);
+}
+.tool:active{background:var(--ink);color:#fff}
+
+/* ---------- แถบหมวดหมู่ ---------- */
+.cats{
+  position:absolute;top:calc(var(--u)*92);left:0;right:0;z-index:10;
+  display:flex;gap:calc(var(--u)*2);overflow-x:auto;scrollbar-width:none;
+  padding:0 calc(var(--u)*5);
+}
+.cats::-webkit-scrollbar{display:none}
+.cats::before,.cats::after{content:"";flex:none;width:0}
+.ct{
+  flex:none;text-align:center;padding:calc(var(--u)*1.4) calc(var(--u)*3.4) calc(var(--u)*2);
+  border-bottom:calc(var(--u)*.35) solid transparent;
+  font-size:calc(var(--u)*3.1);color:var(--ink-soft);white-space:nowrap;
+  transition:.35s var(--slow);font-weight:300;
+}
+.ct b{display:block;font-size:calc(var(--u)*2.2);font-weight:200;opacity:.6;margin-top:calc(var(--u)*.4);letter-spacing:.1em}
+.ct.on{color:var(--ink);border-bottom-color:var(--ink)}
+.ct.soon{opacity:.34}
+
+.hairline{position:absolute;top:calc(var(--u)*103.4);left:calc(var(--u)*5);right:calc(var(--u)*5);
+  height:1px;background:var(--hair);z-index:9}
+
+/* ---------- ชิปหมวดย่อย ---------- */
+.subs{
+  position:absolute;top:calc(var(--u)*106);left:0;right:0;z-index:10;
+  display:flex;gap:calc(var(--u)*2);overflow-x:auto;scrollbar-width:none;
+  padding:0 calc(var(--u)*5);
+}
+.subs::-webkit-scrollbar{display:none}
+.sb{
+  flex:none;padding:calc(var(--u)*1.4) calc(var(--u)*3.2);border-radius:999px;
+  border:1px solid var(--hair);font-size:calc(var(--u)*2.8);color:var(--ink-soft);
+  white-space:nowrap;transition:.3s var(--slow);font-weight:300;
+}
+.sb.on{border-color:var(--ink);color:var(--ink);background:rgba(32,36,42,.06)}
+
+/* ---------- ตารางโมโนแกรม ---------- */
+.grid{
+  position:absolute;top:calc(var(--u)*115);left:0;right:0;bottom:0;z-index:8;
+  overflow-y:auto;scrollbar-width:none;
+  padding:calc(var(--u)*2) calc(var(--u)*5) calc(var(--u)*8);
+  display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.6);
+  align-content:start;
+}
+.grid::-webkit-scrollbar{display:none}
+.card{
+  position:relative;aspect-ratio:1/1.06;border-radius:calc(var(--u)*1.4);
+  border:1px solid var(--hair);
+  background:linear-gradient(168deg, var(--sheet-2), #F3F4F5 78%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(var(--u)*1.6);overflow:hidden;
+  transition:.4s var(--slow);
+}
+/* กรอบเส้นคู่แบบตราสัญลักษณ์ */
+.card::before{
+  content:"";position:absolute;inset:calc(var(--u)*1.5);
+  border:1px solid rgba(32,36,42,.1);border-radius:calc(var(--u)*.6);
+  transition:.4s var(--slow);
+}
+.card .mono{
+  font-family:var(--f-display);font-weight:200;
+  font-size:calc(var(--u)*6.4);line-height:1;letter-spacing:.12em;
+  color:var(--sil-3);transition:.4s var(--slow);
+}
+.card .rule{width:calc(var(--u)*5);height:1px;background:var(--sil-2);margin:calc(var(--u)*1.6) 0}
+.card .nm{
+  font-size:calc(var(--u)*2.3);line-height:1.35;text-align:center;color:var(--ink-soft);
+  font-weight:300;padding:0 calc(var(--u)*.6);
+}
+.card.on{
+  border-color:var(--ink);
+  background:linear-gradient(168deg, #2E3339, #1C2025 82%);
+}
+.card.on::before{inset:calc(var(--u)*1.1);border-color:rgba(255,255,255,.34)}
+.card.on .mono{color:#FFFFFF}
+.card.on .nm{color:rgba(255,255,255,.82)}
+.card:active{transform:scale(.97)}
+
+/* ---------- แผงรายละเอียด ---------- */
+.detail{
+  position:absolute;left:0;right:0;bottom:0;top:calc(var(--u)*92);z-index:20;
+  background:linear-gradient(180deg, rgba(251,251,250,.86), var(--sheet-0) 12%);
+  border-top:1px solid var(--ink);
+  padding:calc(var(--u)*6) calc(var(--u)*5.5);
+  transform:translateY(100%);transition:transform .55s var(--slow);
+  display:flex;flex-direction:column;
+}
+.detail.on{transform:none}
+.dtop{display:flex;align-items:flex-start;gap:calc(var(--u)*4)}
+.demblem{
+  width:calc(var(--u)*17);height:calc(var(--u)*17);flex:none;border-radius:calc(var(--u)*1.2);
+  border:1px solid var(--ink);display:grid;place-items:center;
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*6);
+  color:#FFFFFF;background:linear-gradient(168deg,#2E3339,#1C2025);
+}
+.dname{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*5.1);line-height:1.32}
+.dkind{font-size:calc(var(--u)*2.7);letter-spacing:.24em;color:var(--sil-2);margin-top:calc(var(--u)*1.2);font-weight:300}
+.dclose{margin-left:auto;font-family:var(--f-display);font-size:calc(var(--u)*5);color:var(--ink-soft);line-height:1}
+.ddesc{font-size:calc(var(--u)*3.2);line-height:1.75;color:rgba(32,36,42,.72);margin-top:calc(var(--u)*4);font-weight:300}
+.dfacts{display:flex;gap:calc(var(--u)*5);margin-top:calc(var(--u)*4.5);padding-top:calc(var(--u)*4);border-top:1px solid var(--hair)}
+.dfacts div span{display:block;font-size:calc(var(--u)*2.3);letter-spacing:.2em;color:var(--ink-soft);margin-bottom:calc(var(--u)*1)}
+.dfacts div b{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*3.5);color:var(--ink)}
+.dgo{
+  margin-top:auto;width:100%;padding:calc(var(--u)*4) 0;
+  border:1px solid var(--ink);border-radius:calc(var(--u)*1);
+  font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*3.6);
+  letter-spacing:.24em;text-indent:.24em;color:var(--ink);
+  transition:.4s var(--slow);
+}
+.dgo:active,.dgo.walking{background:var(--ink);color:#fff}
+
+/* ---------- ข้อความแจ้งเตือนเล็กๆ ---------- */
+.toast{
+  position:absolute;left:50%;bottom:calc(var(--u)*8);z-index:30;
+  transform:translate(-50%, calc(var(--u)*4));opacity:0;pointer-events:none;
+  padding:calc(var(--u)*2) calc(var(--u)*4);border-radius:999px;
+  background:rgba(32,36,42,.94);border:1px solid rgba(32,36,42,.2);
+  font-size:calc(var(--u)*2.8);color:#FFFFFF;
+  transition:.4s var(--slow);
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+.hint{
+  position:absolute;top:calc(var(--u)*85);left:0;right:0;z-index:6;text-align:center;
+  font-size:calc(var(--u)*2.5);letter-spacing:.2em;color:rgba(32,36,42,.34);
+  pointer-events:none;transition:opacity .5s;font-weight:200;
+}
+.hint.hide{opacity:0}
+
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition-duration:.16s !important}}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <header class="head">
+    <div class="mark">SEACON SQUARE</div>
+    <div class="sub">แผนผังร้านค้า · ชั้น 2</div>
+  </header>
+
+  <canvas id="view"></canvas>
+  <div class="maptag">ศูนย์อาหาร</div>
+
+  <div class="tools">
+    <button class="tool" id="rotL" aria-label="หมุนซ้าย">‹</button>
+    <button class="tool" id="rotR" aria-label="หมุนขวา">›</button>
+    <button class="tool" id="home" aria-label="กลับมุมมองเริ่มต้น">⌂</button>
+  </div>
+
+  <div class="hint" id="hint">ลากเพื่อหมุนแผนผัง</div>
+
+  <nav class="cats" id="cats"></nav>
+  <div class="hairline"></div>
+  <div class="subs" id="subs"></div>
+  <div class="grid" id="grid"></div>
+
+  <section class="detail" id="detail">
+    <div class="dtop">
+      <div class="demblem" id="dMono"></div>
+      <div>
+        <div class="dname" id="dName"></div>
+        <div class="dkind" id="dKind"></div>
+      </div>
+      <button class="dclose" id="dClose" aria-label="ปิด">×</button>
+    </div>
+    <p class="ddesc" id="dDesc"></p>
+    <div class="dfacts">
+      <div><span>ยูนิต</span><b id="dUnit"></b></div>
+      <div><span>เวลาเปิด</span><b id="dHours"></b></div>
+      <div><span>ระยะเดิน</span><b id="dDist"></b></div>
+    </div>
+    <button class="dgo" id="dGo">นำทางไปยังร้าน</button>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+function $(id){ return document.getElementById(id); }
+
+/* ==================================================================
+   1. ข้อมูล — ส่วนเดียวที่ทีมห้างต้องแก้
+   ชื่อร้านทั้งหมดเป็นชื่อสมมติสำหรับ mockup
+   ================================================================== */
+
+var CATEGORIES = [
+  {id:"food",    name:"อาหารและเครื่องดื่ม", en:"FOOD & BEVERAGE", ready:true},
+  {id:"beauty",  name:"สุขภาพและความงาม",   en:"HEALTH & BEAUTY",  ready:false},
+  {id:"it",      name:"ไอทีและมือถือ",       en:"IT & MOBILE",      ready:false},
+  {id:"finance", name:"การเงินและธนาคาร",   en:"FINANCE",          ready:false},
+  {id:"fashion", name:"แฟชั่น",              en:"FASHION",          ready:false}
+];
+
+var SUBS = [
+  {id:"",     name:"ทั้งหมด"},
+  {id:"main", name:"อาหารคาว"},
+  {id:"dess", name:"ของหวาน"},
+  {id:"drink",name:"เครื่องดื่ม"}
+];
+
+/* [ชื่อร้าน, อักษรย่อ, หมวดย่อย, คำอธิบาย] */
+var TENANTS = [
+  ["ครัวคุณย่า",           "KY","main","อาหารตามสั่งและแกงไทยโบราณกว่ายี่สิบอย่าง เปลี่ยนเมนูพิเศษทุกวัน"],
+  ["ก๋วยเตี๋ยวเรือท่าน้ำ",  "TN","main","ก๋วยเตี๋ยวเรือน้ำตกสูตรอยุธยา มีทั้งหมูและเนื้อ ลูกชิ้นทำเอง"],
+  ["ข้าวมันไก่ตวงทอง",     "TT","main","ไก่ต้มและไก่ทอด ข้าวหุงด้วยน้ำต้มกระดูก น้ำจิ้มสูตรเจ้าของร้าน"],
+  ["ชาบูฮับ",              "SH","main","ชาบูบุฟเฟต์ น้ำซุปหกแบบ เนื้อนำเข้าและผักสดจากฟาร์ม"],
+  ["ปิ้งย่างเตาถ่าน",      "TC","main","หมูย่างสไตล์เกาหลีบนเตาถ่านจริง หมักด้วยสูตรเฉพาะข้ามคืน"],
+  ["ส้มตำแซ่บนัว",         "SN","main","ตำไทย ตำปูปลาร้า ไก่ย่าง คอหมูย่าง ครกละครกตำสด"],
+  ["ข้าวหมูกรอบเจ๊แดง",    "JD","main","หมูกรอบ หมูแดง และเป็ดย่าง ทอดใหม่ทุกสองชั่วโมง"],
+  ["ซูชิคาวะ",             "KW","main","ซูชิและซาชิมิ ปลาส่งตรงจากตลาดทุกเช้า มีเคาน์เตอร์นั่งหน้าเชฟ"],
+  ["พิซซ่าฟอร์โน่",        "FN","main","พิซซ่าเตาฟืนอุณหภูมิสูง แป้งหมักสี่สิบแปดชั่วโมง"],
+  ["ก๋วยจั๊บญวนป้าน้อย",   "PN","main","ก๋วยจั๊บญวน แหนมเนือง หมูยอ เครื่องเคียงสิบอย่าง"],
+  ["ไก่ทอดคริสปี้",        "CR","main","ไก่ทอดกรอบ เบอร์เกอร์ และเฟรนช์ฟรายส์ตัดหนา"],
+  ["บะหมี่เป็ดฮ่องกง",     "HK","main","บะหมี่เกี๊ยวและเป็ดย่างสไตล์ฮ่องกง น้ำซุปเคี่ยวแปดชั่วโมง"],
+  ["ไอศกรีมโฮมเมด",        "HM","dess","ไอศกรีมกะทิและชาไทย สิบแปดรสชาติ ทำสดทุกวัน"],
+  ["บิงซูหิมะ",            "BS","dess","บิงซูเกล็ดนุ่ม ผลไม้สดตามฤดูกาล เสิร์ฟถ้วยใหญ่แบ่งกันได้"],
+  ["เครปญี่ปุ่นละมุน",     "LM","dess","เครปสดม้วนมือ ครีมสดตีใหม่ทุกชั่วโมง"],
+  ["บัวลอยคุณป้า",         "BL","dess","บัวลอยไข่หวาน น้ำกะทิสด ขนมไทยหมุนเวียนตามวัน"],
+  ["กาแฟดอยหอม",          "DH","drink","เมล็ดคั่วเองจากดอยทางเหนือ มีที่นั่งยี่สิบที่และปลั๊กทุกโต๊ะ"],
+  ["ชานมไข่มุกมูมู่",      "MM","drink","ชานมไต้หวัน ชีสโฟม ปรับความหวานได้ห้าระดับ"],
+  ["น้ำผลไม้ฟรุ๊ตตี้",     "FT","drink","น้ำผลไม้คั้นสดไม่เติมน้ำตาล สมูทตี้และน้ำมะพร้าว"],
+  ["ชาไทยโบราณ",          "TB","drink","ชาไทย ชาเย็น ชามะนาว ชงด้วยถุงชาแบบดั้งเดิม"]
+];
+
+var SUBNAME = {main:"อาหารคาว", dess:"ของหวาน", drink:"เครื่องดื่ม"};
+
+/* ==================================================================
+   2. ปั้นผังศูนย์อาหาร — ร้านล้อมรอบ โซนที่นั่งตรงกลาง
+      ทุกอย่างสร้างจากตัวเลข ไม่มีการปั้นโมเดลด้วยมือ
+   ================================================================== */
+var HALL = {x0:0, x1:52, z0:0, z1:40, depth:7};
+var SEAT = {x0:13.5, x1:38.5, z0:13.5, z1:26.5};
+var YOU  = {x:26, z:10};                    /* จุดที่ตู้ตั้งอยู่ */
+var RING = [{x:10,z:10},{x:42,z:10},{x:42,z:30},{x:10,z:30}];  /* แนวทางเดินวน */
+
+var shops = [];
+(function buildHall(){
+  var d = HALL.depth, g = 0.55, i, k = 0;
+  function row(n, axis, fixed, from, to, doorSide){
+    var span = to - from, size = (span - g*(n-1))/n, p = from;
+    for(i=0;i<n;i++){
+      var t = TENANTS[k]; if(!t) return;
+      var s = {
+        idx:k, name:t[0], mono:t[1], sub:t[2], desc:t[3],
+        unit:"2F-" + String(k+1).padStart(2,"0"),
+        h: 3.2 + ((k*37)%9)*0.16,     /* ความสูงต่างกันเล็กน้อย ให้ไม่แบนราบ */
+        pop: 0                         /* ค่าเด้งตอนถูกเลือก */
+      };
+      if(axis === "x"){ s.x = p; s.w = size; s.z = fixed; s.d = d; }
+      else            { s.z = p; s.d = size; s.x = fixed; s.w = d; }
+      s.door = doorSide(s);
+      shops.push(s); p += size + g; k++;
+    }
+  }
+  row(6,"x",HALL.z1-d, 2, 50, function(s){ return {x:s.x+s.w/2, z:s.z}; });        /* แถวเหนือ */
+  row(6,"x",0,          2, 50, function(s){ return {x:s.x+s.w/2, z:s.z+s.d}; });   /* แถวใต้ */
+  row(4,"z",0,          9.5, 30.5, function(s){ return {x:s.x+s.w, z:s.z+s.d/2}; });      /* ฝั่งตะวันตก */
+  row(4,"z",HALL.x1-d,  9.5, 30.5, function(s){ return {x:s.x, z:s.z+s.d/2}; });          /* ฝั่งตะวันออก */
+})();
+
+/* ==================================================================
+   3. เส้นทางเดิน — เดินตามทางวนรอบโซนที่นั่ง เลือกทางที่สั้นกว่า
+   ================================================================== */
+var ringSeg = [], ringLen = 0;
+(function(){
+  for(var i=0;i<RING.length;i++){
+    var a = RING[i], b = RING[(i+1)%RING.length];
+    var L = Math.hypot(b.x-a.x, b.z-a.z);
+    ringSeg.push({a:a,b:b,L:L,at:ringLen}); ringLen += L;
+  }
+})();
+function onRing(p){
+  var best = null;
+  ringSeg.forEach(function(s){
+    var vx = s.b.x-s.a.x, vz = s.b.z-s.a.z;
+    var t = ((p.x-s.a.x)*vx + (p.z-s.a.z)*vz) / (s.L*s.L);
+    t = Math.max(0, Math.min(1, t));
+    var q = {x:s.a.x+vx*t, z:s.a.z+vz*t};
+    var dd = Math.hypot(p.x-q.x, p.z-q.z);
+    if(!best || dd < best.d) best = {d:dd, t:s.at + t*s.L, p:q};
+  });
+  return best;
+}
+function ringPoint(t){
+  t = ((t % ringLen) + ringLen) % ringLen;
+  for(var i=0;i<ringSeg.length;i++){
+    var s = ringSeg[i];
+    if(t <= s.at + s.L || i === ringSeg.length-1){
+      var k = (t - s.at)/s.L;
+      return {x:s.a.x + (s.b.x-s.a.x)*k, z:s.a.z + (s.b.z-s.a.z)*k};
+    }
+  }
+  return RING[0];
+}
+function buildRoute(s){
+  var A = onRing(YOU), B = onRing(s.door);
+  var fwd = ((B.t - A.t) + ringLen) % ringLen;
+  var dir = (fwd <= ringLen - fwd) ? 1 : -1;
+  var span = (dir === 1) ? fwd : ringLen - fwd;
+  var pts = [{x:YOU.x, z:YOU.z}, A.p];
+  var steps = Math.max(1, Math.ceil(span/2));
+  for(var i=1;i<=steps;i++) pts.push(ringPoint(A.t + dir*span*(i/steps)));
+  pts.push({x:s.door.x, z:s.door.z});
+  return pts;
+}
+function routeLength(r){
+  var L = 0;
+  for(var i=0;i<r.length-1;i++) L += Math.hypot(r[i+1].x-r[i].x, r[i+1].z-r[i].z);
+  return L;
+}
+
+/* ==================================================================
+   4. เรนเดอเรอร์ 3 มิติ เขียนเอง บน canvas 2 มิติ
+   ================================================================== */
+var cv = $("view"), ctx = cv.getContext("2d"), W=0, H=0;
+/* yaw = PI คือกล้องยืนอยู่ฝั่งเดียวกับตู้ มองเข้าไปในห้อง
+   จุด 'คุณอยู่ตรงนี้' จะอยู่ล่างสุดของจอเสมอ ตามหลักป้ายบอกทาง */
+var cam = {tx:26, tz:20, yaw:Math.PI, pitch:0.72, dist:82};
+var HOME = {tx:26, tz:20, yaw:Math.PI, pitch:0.72, dist:82};
+var FOV = 0.8;
+var eye={x:0,y:0,z:0}, bx={}, by={}, bz={}, focal=1;
+
+function resize(){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var r = cv.getBoundingClientRect();
+  W = r.width; H = r.height;
+  cv.width = W*dpr; cv.height = H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize", resize);
+
+function updateCam(){
+  var cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  eye.x = cam.tx + cam.dist*cp*Math.sin(cam.yaw);
+  eye.y = cam.dist*sp;
+  eye.z = cam.tz + cam.dist*cp*Math.cos(cam.yaw);
+  var fx = cam.tx-eye.x, fy = -eye.y, fz = cam.tz-eye.z, fl = Math.hypot(fx,fy,fz);
+  bz.x=fx/fl; bz.y=fy/fl; bz.z=fz/fl;
+  bx.x = -bz.z; bx.y = 0; bx.z = bz.x;   /* = cross(forward, worldUp) */
+  var rl = Math.hypot(bx.x,bx.z)||1; bx.x/=rl; bx.z/=rl;
+  by.x = bx.y*bz.z - bx.z*bz.y;
+  by.y = bx.z*bz.x - bx.x*bz.z;
+  by.z = bx.x*bz.y - bx.y*bz.x;
+  focal = (H/2)/Math.tan(FOV/2);
+}
+function P(x,y,z){
+  var dx=x-eye.x, dy=y-eye.y, dz=z-eye.z;
+  var cz = dx*bz.x + dy*bz.y + dz*bz.z;
+  if(cz < 0.5) return null;
+  return { x: W/2 + focal*(dx*bx.x+dy*bx.y+dz*bx.z)/cz,
+           y: H/2 - focal*(dx*by.x+dy*by.y+dz*by.z)/cz, z: cz };
+}
+function poly(pts, fill, stroke, lw){
+  for(var i=0;i<pts.length;i++) if(!pts[i]) return;
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for(var j=1;j<pts.length;j++) ctx.lineTo(pts[j].x, pts[j].y);
+  ctx.closePath();
+  if(fill){ ctx.fillStyle=fill; ctx.fill(); }
+  if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=lw||1; ctx.stroke(); }
+}
+
+/* ==================================================================
+   5. สถานะ
+   ================================================================== */
+var selected = null, sub = "", route = null, walker = null, idleSpin = false;
+var flying = null;
+
+function centerOf(s){ return {x:s.x+s.w/2, z:s.z+s.d/2}; }
+function visible(s){ return !sub || s.sub === sub; }
+
+/* ==================================================================
+   6. วาดภาพ
+   ================================================================== */
+function draw(){
+  if(idleSpin) cam.yaw += 0.0016;
+  if(flying) stepFly();
+  shops.forEach(function(s){
+    var target = (selected === s) ? 1 : 0;
+    s.pop += (target - s.pop) * 0.16;
+  });
+
+  updateCam();
+  ctx.clearRect(0,0,W,H);
+
+  /* พื้นห้อง */
+  poly([P(-2,0,-2),P(HALL.x1+2,0,-2),P(HALL.x1+2,0,HALL.z1+2),P(-2,0,HALL.z1+2)],
+       "#E7E8EA", "rgba(32,36,42,.16)", 1);
+  /* โซนที่นั่งตรงกลาง */
+  poly([P(SEAT.x0,0.02,SEAT.z0),P(SEAT.x1,0.02,SEAT.z0),P(SEAT.x1,0.02,SEAT.z1),P(SEAT.x0,0.02,SEAT.z1)],
+       "#DDDFE3", "rgba(32,36,42,.13)", 1);
+  drawSeats();
+  /* แนวทางเดินวน */
+  ctx.save(); ctx.setLineDash([5,7]); ctx.strokeStyle="rgba(32,36,42,.18)"; ctx.lineWidth=1.2;
+  ctx.beginPath();
+  RING.forEach(function(p,i){ var q=P(p.x,0.03,p.z); if(!q) return; i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); });
+  ctx.closePath(); ctx.stroke(); ctx.restore();
+
+  if(route) drawRoute();
+
+  /* เรียงร้านจากไกลไปใกล้ */
+  var order = shops.map(function(s){
+    var c = centerOf(s);
+    return {s:s, d:(c.x-eye.x)*(c.x-eye.x)+(c.z-eye.z)*(c.z-eye.z)};
+  }).sort(function(a,b){ return b.d - a.d; });
+
+  var labels = [];
+  order.forEach(function(o){ drawShop(o.s, labels); });
+
+  drawYou();
+  if(walker) drawWalker();
+  labels.sort(function(a,b){ return b.z-a.z; }).forEach(drawLabel);
+}
+
+function drawSeats(){
+  /* โต๊ะกลมเตี้ยๆ ในโซนที่นั่ง สร้างจากกริดคงที่ */
+  ctx.save();
+  for(var gx=0; gx<5; gx++) for(var gz=0; gz<3; gz++){
+    var x = SEAT.x0 + 3 + gx*4.8, z = SEAT.z0 + 2.6 + gz*4.2;
+    var c = P(x, 0.75, z); if(!c) continue;
+    var r = Math.max(1.6, 62/c.z);
+    ctx.fillStyle = "rgba(32,36,42,.13)";
+    ctx.beginPath(); ctx.ellipse(c.x, c.y, r, r*0.5, 0, 0, 6.2832); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawShop(s, labels){
+  var vis = visible(s), sel = (selected === s);
+  var lift = s.pop * 1.5;
+  var y = (vis ? s.h : s.h*0.4) + lift;
+  var x0=s.x, x1=s.x+s.w, z0=s.z, z1=s.z+s.d;
+  var t = [P(x0,y,z0),P(x1,y,z0),P(x1,y,z1),P(x0,y,z1)];
+  var b = [P(x0,0,z0),P(x1,0,z0),P(x1,0,z1),P(x0,0,z1)];
+
+  ctx.globalAlpha = vis ? 1 : 0.3;
+
+  var faces = [[0,1],[1,2],[2,3],[3,0]];
+  var nrm = [{x:0,z:-1},{x:1,z:0},{x:0,z:1},{x:-1,z:0}];
+  var c = centerOf(s);
+  faces.forEach(function(f,i){
+    if(nrm[i].x*(eye.x-c.x) + nrm[i].z*(eye.z-c.z) <= 0) return;
+    var lit = 0.5 + 0.5*Math.abs(nrm[i].x*0.7 + nrm[i].z*0.3);
+    var base = sel ? [64,71,80] : [206,210,216];
+    var k = lit;
+    poly([b[f[0]],b[f[1]],t[f[1]],t[f[0]]],
+      "rgb("+Math.round(base[0]*k)+","+Math.round(base[1]*k)+","+Math.round(base[2]*k)+")",
+      "rgba(0,0,0,.45)", 1);
+  });
+  /* หลังคา */
+  poly(t, sel ? "#262B31" : "#F3F4F6", sel ? "#FFFFFF" : "rgba(32,36,42,.22)", sel ? 2 : 1);
+
+  /* ประตูร้าน */
+  if(vis){
+    var dw = 2.0, dd = s.door;
+    var along = (s.w > s.d) ? "x" : "z";
+    var p1,p2;
+    if(along === "x"){ p1 = {x:dd.x-dw/2, z:dd.z}; p2 = {x:dd.x+dw/2, z:dd.z}; }
+    else             { p1 = {x:dd.x, z:dd.z-dw/2}; p2 = {x:dd.x, z:dd.z+dw/2}; }
+    poly([P(p1.x,0,p1.z),P(p2.x,0,p2.z),P(p2.x,2.1,p2.z),P(p1.x,2.1,p1.z)],
+         "rgba(32,36,42,.09)","rgba(32,36,42,.3)",1);
+  }
+  ctx.globalAlpha = 1;
+
+  if(vis){
+    var top = P(c.x, y+0.5, c.z);
+    if(top) labels.push({p:top, s:s, sel:sel, z:top.z});
+  }
+}
+
+function drawLabel(l){
+  var size = Math.max(6.5, Math.min(13, 300/l.p.z));
+  if(size < 8 && !l.sel) return;
+  var fs = l.sel ? size*1.3 : size;
+  ctx.font = "300 " + fs + "px Prompt, sans-serif";
+  var txt = l.s.name.length > 14 ? l.s.name.slice(0,13)+"…" : l.s.name;
+  var w = ctx.measureText(txt).width, h = fs*1.9;
+  var rx = l.p.x-w/2-7, ry = l.p.y-h/2;
+  ctx.fillStyle = l.sel ? "rgba(32,36,42,.95)" : "rgba(255,255,255,.9)";
+  ctx.beginPath();
+  ctx.moveTo(rx+2, ry); ctx.lineTo(rx+w+12, ry);
+  ctx.lineTo(rx+w+14, ry+h/2); ctx.lineTo(rx+w+12, ry+h);
+  ctx.lineTo(rx+2, ry+h); ctx.lineTo(rx, ry+h/2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = l.sel ? "rgba(255,255,255,.85)" : "rgba(32,36,42,.16)"; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle = l.sel ? "#FFFFFF" : "rgba(32,36,42,.82)";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(txt, l.p.x, l.p.y+0.5);
+}
+
+function drawRoute(){
+  ctx.save();
+  ctx.strokeStyle = "rgba(32,36,42,.72)"; ctx.lineWidth = 2.6;
+  ctx.lineJoin="round"; ctx.lineCap="round";
+  ctx.setLineDash([7,6]); ctx.lineDashOffset = -(Date.now()/70)%13;
+  ctx.beginPath();
+  var on = false;
+  route.forEach(function(p){
+    var q = P(p.x,0.1,p.z); if(!q) return;
+    on ? ctx.lineTo(q.x,q.y) : (ctx.moveTo(q.x,q.y), on=true);
+  });
+  ctx.stroke(); ctx.restore();
+}
+
+function drawYou(){
+  var p = P(YOU.x,0,YOU.z); if(!p) return;
+  var r = Math.max(3.5, 190/p.z);
+  var pulse = 1 + 0.32*Math.sin(Date.now()/520);
+  ctx.save();
+  ctx.strokeStyle="rgba(32,36,42,.3)"; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.ellipse(p.x,p.y,r*2.4*pulse,r*1.1*pulse,0,0,6.2832); ctx.stroke();
+  ctx.fillStyle="#262B31";
+  ctx.beginPath(); ctx.arc(p.x,p.y-r*0.6,r*0.62,0,6.2832); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(p.x-r*0.62,p.y-r*0.6); ctx.lineTo(p.x+r*0.62,p.y-r*0.6);
+  ctx.lineTo(p.x,p.y+r*0.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle="rgba(32,36,42,.78)";
+  ctx.font="300 "+Math.max(8,r*1.5)+"px Prompt, sans-serif";
+  ctx.textAlign="center"; ctx.textBaseline="bottom";
+  ctx.fillText("คุณอยู่ตรงนี้", p.x, p.y - r*2.6);
+  ctx.restore();
+}
+
+function drawWalker(){
+  var p = P(walker.x,0,walker.z); if(!p) return;
+  var s = Math.max(4, 210/p.z);
+  ctx.save();
+  ctx.fillStyle="rgba(32,36,42,.2)";
+  ctx.beginPath(); ctx.ellipse(p.x,p.y,s*0.62,s*0.24,0,0,6.2832); ctx.fill();
+  ctx.fillStyle="#262B31";
+  ctx.beginPath();
+  ctx.moveTo(p.x-s*0.3, p.y);
+  ctx.lineTo(p.x-s*0.22, p.y-s*1.5);
+  ctx.lineTo(p.x+s*0.22, p.y-s*1.5);
+  ctx.lineTo(p.x+s*0.3, p.y);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.x, p.y-s*1.85, s*0.36, 0, 6.2832); ctx.fill();
+  ctx.restore();
+}
+
+/* ==================================================================
+   7. กล้องบินไปหาร้าน
+   ================================================================== */
+function flyTo(s){
+  var c = centerOf(s);
+  /* หันกล้องให้มองจากกลางห้องออกไปทางร้าน จะได้เห็นหน้าร้าน */
+  var yaw = Math.atan2(c.x - 26, c.z - 20) + Math.PI;
+  flying = {
+    t0: performance.now(), dur: 900,
+    from: {tx:cam.tx, tz:cam.tz, yaw:cam.yaw, pitch:cam.pitch, dist:cam.dist},
+    to:   {tx:(c.x+26)/2, tz:(c.z+20)/2, yaw:yaw, pitch:0.62, dist:58}
+  };
+  /* เลือกทางหมุนที่สั้นที่สุด */
+  var d = flying.to.yaw - flying.from.yaw;
+  while(d >  Math.PI) d -= Math.PI*2;
+  while(d < -Math.PI) d += Math.PI*2;
+  flying.to.yaw = flying.from.yaw + d;
+}
+function stepFly(){
+  var k = (performance.now() - flying.t0)/flying.dur;
+  if(k >= 1) k = 1;
+  var e = 1 - Math.pow(1-k, 3);
+  ["tx","tz","yaw","pitch","dist"].forEach(function(p){
+    cam[p] = flying.from[p] + (flying.to[p]-flying.from[p])*e;
+  });
+  if(k >= 1) flying = null;
+}
+
+/* ==================================================================
+   8. เดินนำทาง
+   ================================================================== */
+var walkTimer = null;
+function startWalk(){
+  if(!selected) return;
+  route = buildRoute(selected);
+  var segs = [], total = 0, i;
+  for(i=0;i<route.length-1;i++){
+    var L = Math.hypot(route[i+1].x-route[i].x, route[i+1].z-route[i].z);
+    segs.push(L); total += L;
+  }
+  var t0 = performance.now(), speed = 8;
+  var go = $("dGo"); go.classList.add("walking"); go.textContent = "กำลังนำทาง";
+  clearInterval(walkTimer);
+  walkTimer = setInterval(function(){
+    var d = (performance.now()-t0)/1000*speed;
+    if(d >= total){
+      walker = route[route.length-1];
+      clearInterval(walkTimer);
+      go.classList.remove("walking"); go.textContent = "นำทางอีกครั้ง";
+      return;
+    }
+    var acc = 0;
+    for(i=0;i<segs.length;i++){
+      if(d <= acc+segs[i]){
+        var t = segs[i] ? (d-acc)/segs[i] : 0;
+        walker = { x: route[i].x+(route[i+1].x-route[i].x)*t,
+                   z: route[i].z+(route[i+1].z-route[i].z)*t };
+        break;
+      }
+      acc += segs[i];
+    }
+  }, 1000/30);
+}
+
+/* ==================================================================
+   9. แตะและลากบนแผนผัง
+   ================================================================== */
+function inPoly(px,py,pts){
+  var inside=false;
+  for(var i=0,j=pts.length-1;i<pts.length;j=i++){
+    if(!pts[i]||!pts[j]) return false;
+    if((pts[i].y>py)!==(pts[j].y>py) &&
+       px < (pts[j].x-pts[i].x)*(py-pts[i].y)/(pts[j].y-pts[i].y)+pts[i].x) inside=!inside;
+  }
+  return inside;
+}
+function pick(px,py){
+  updateCam();
+  var best=null, bz2=1e9;
+  shops.forEach(function(s){
+    if(!visible(s)) return;
+    var y = s.h + s.pop*1.5;
+    var t = [P(s.x,y,s.z),P(s.x+s.w,y,s.z),P(s.x+s.w,y,s.z+s.d),P(s.x,y,s.z+s.d)];
+    if(inPoly(px,py,t)){
+      var zz=(t[0].z+t[2].z)/2;
+      if(zz<bz2){ bz2=zz; best=s; }
+    }
+  });
+  return best;
+}
+var drag=null, moved=0, pinch=null;
+function xy(e){
+  var r = cv.getBoundingClientRect();
+  var t = e.touches ? e.touches[0] : e;
+  return {x:t.clientX-r.left, y:t.clientY-r.top};
+}
+function down(e){
+  stopIdle();
+  if(e.touches && e.touches.length===2){
+    pinch = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    drag=null; return;
+  }
+  drag = xy(e); moved = 0;
+}
+function move(e){
+  if(pinch && e.touches && e.touches.length===2){
+    var d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+    cam.dist = Math.max(44, Math.min(120, cam.dist*pinch/d)); pinch = d;
+    e.preventDefault(); return;
+  }
+  if(!drag) return;
+  var p = xy(e), dx = p.x-drag.x, dy = p.y-drag.y;
+  moved += Math.abs(dx)+Math.abs(dy);
+  flying = null;
+  cam.yaw -= dx*0.006;
+  cam.pitch = Math.max(0.3, Math.min(1.3, cam.pitch + dy*0.004));
+  drag = p; e.preventDefault();
+  $("hint").classList.add("hide");
+}
+function up(e){
+  if(pinch){ pinch=null; return; }
+  if(drag && moved < 8){
+    var t = e.changedTouches ? e.changedTouches[0] : e;
+    var r = cv.getBoundingClientRect();
+    var s = pick(t.clientX-r.left, t.clientY-r.top);
+    if(s) select(s); else closeDetail();
+  }
+  drag = null;
+}
+cv.addEventListener("mousedown",down); cv.addEventListener("mousemove",move);
+window.addEventListener("mouseup",up);
+cv.addEventListener("touchstart",down,{passive:false});
+cv.addEventListener("touchmove",move,{passive:false});
+cv.addEventListener("touchend",up);
+cv.addEventListener("wheel",function(e){
+  stopIdle(); flying=null;
+  cam.dist = Math.max(44, Math.min(120, cam.dist + e.deltaY*0.06));
+  e.preventDefault();
+},{passive:false});
+
+/* ==================================================================
+   10. ส่วนติดต่อผู้ใช้
+   ================================================================== */
+function renderCats(){
+  $("cats").innerHTML = CATEGORIES.map(function(c){
+    return '<button class="ct'+(c.ready?" on":" soon")+'" data-cat="'+c.id+'">' +
+           c.name + '<b>' + (c.ready ? TENANTS.length + " ร้าน" : "เร็วๆ นี้") + '</b></button>';
+  }).join("");
+}
+function renderSubs(){
+  $("subs").innerHTML = SUBS.map(function(s){
+    var n = s.id ? shops.filter(function(x){ return x.sub===s.id; }).length : shops.length;
+    return '<button class="sb'+(sub===s.id?" on":"")+'" data-sub="'+s.id+'">'+s.name+' · '+n+'</button>';
+  }).join("");
+}
+function renderGrid(){
+  $("grid").innerHTML = shops.filter(visible).map(function(s){
+    return '<button class="card'+(selected===s?" on":"")+'" data-i="'+s.idx+'">' +
+             '<span class="mono">'+s.mono+'</span>' +
+             '<span class="rule"></span>' +
+             '<span class="nm">'+s.name+'</span>' +
+           '</button>';
+  }).join("");
+}
+function select(s){
+  selected = s; route = null; walker = null; clearInterval(walkTimer);
+  stopIdle(); flyTo(s);
+  $("dMono").textContent = s.mono;
+  $("dName").textContent = s.name;
+  $("dKind").textContent = SUBNAME[s.sub] || "";
+  $("dDesc").textContent = s.desc;
+  $("dUnit").textContent = s.unit;
+  $("dHours").textContent = "10.00–21.00";
+  $("dDist").textContent = Math.round(routeLength(buildRoute(s))) + " ม.";
+  var g = $("dGo"); g.classList.remove("walking"); g.textContent = "นำทางไปยังร้าน";
+  $("detail").classList.add("on");
+  $("hint").classList.add("hide");
+  renderGrid();
+  var el = $("grid").querySelector('[data-i="'+s.idx+'"]');
+  if(el) el.scrollIntoView({block:"nearest", behavior:"smooth"});
+}
+function closeDetail(){
+  selected = null; route = null; walker = null; clearInterval(walkTimer);
+  $("detail").classList.remove("on");
+  renderGrid();
+}
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("on"); }, 2200);
+}
+
+$("cats").addEventListener("click", function(e){
+  var t = e.target.closest("[data-cat]"); if(!t) return;
+  var c = CATEGORIES.filter(function(x){ return x.id === t.getAttribute("data-cat"); })[0];
+  if(!c.ready){ toast("หมวด " + c.name + " กำลังจัดทำข้อมูล"); return; }
+});
+$("subs").addEventListener("click", function(e){
+  var t = e.target.closest("[data-sub]"); if(!t) return;
+  sub = t.getAttribute("data-sub");
+  if(selected && !visible(selected)) closeDetail();
+  renderSubs(); renderGrid();
+});
+$("grid").addEventListener("click", function(e){
+  var t = e.target.closest("[data-i]"); if(!t) return;
+  select(shops[parseInt(t.getAttribute("data-i"),10)]);
+});
+$("dClose").addEventListener("click", closeDetail);
+$("dGo").addEventListener("click", startWalk);
+$("rotL").addEventListener("click", function(){ stopIdle(); flying=null; cam.yaw += 0.5; });
+$("rotR").addEventListener("click", function(){ stopIdle(); flying=null; cam.yaw -= 0.5; });
+$("home").addEventListener("click", function(){
+  stopIdle(); closeDetail();
+  flying = {t0:performance.now(), dur:800, from:{tx:cam.tx,tz:cam.tz,yaw:cam.yaw,pitch:cam.pitch,dist:cam.dist}, to:{
+    tx:HOME.tx, tz:HOME.tz, yaw:HOME.yaw, pitch:HOME.pitch, dist:HOME.dist}};
+  $("hint").classList.remove("hide");
+});
+
+/* ==================================================================
+   11. โหมดพักจอ กล้องหมุนช้าๆ ดึงคนเข้ามา
+   ================================================================== */
+var idleTimer = null;
+function stopIdle(){
+  idleSpin = false;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(function(){
+    closeDetail(); sub = ""; renderSubs(); renderGrid();
+    cam.pitch = HOME.pitch; cam.dist = HOME.dist; cam.tx = HOME.tx; cam.tz = HOME.tz;
+    idleSpin = true;
+    $("hint").classList.remove("hide");
+  }, 60000);
+}
+["click","touchstart","mousedown","wheel","keydown"].forEach(function(ev){
+  document.addEventListener(ev, stopIdle, {passive:true});
+});
+
+/* ==================================================================
+   12. เริ่มทำงาน
+   ================================================================== */
+resize();
+renderCats(); renderSubs(); renderGrid();
+stopIdle();
+(function loop(){ draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>
