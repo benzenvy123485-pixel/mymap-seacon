@@ -824,7 +824,10 @@ function drawShop(s, labels){
   ctx.globalAlpha = vis ? 1 : 0.24;
   for(var i=0;i<4;i++){
     var a=c[i], b=c[(i+1)%4];
-    var nx=-(b.z-a.z), nz=(b.x-a.x), nl=Math.hypot(nx,nz)||1; nx/=nl; nz/=nl;
+    /* cornersOf เรียงมุมทวนเข็ม สูตร (-dz, dx) จึงได้นอร์มอลชี้เข้าในกล่อง
+       ถ้าใช้ตรงๆ จะกลายเป็นวาดผนังด้านหลังแทนด้านหน้า ตึกจะโปร่งเหมือนเต๊นท์
+       ต้องกลับเครื่องหมายเป็น (dz, -dx) ให้ชี้ออกนอกก่อน แล้วค่อยตัดด้านที่หันหลัง */
+    var nx=(b.z-a.z), nz=-(b.x-a.x), nl=Math.hypot(nx,nz)||1; nx/=nl; nz/=nl;
     if(nx*(eye.x-s.cx)+nz*(eye.z-s.cz) <= 0) continue;
     /* ต่างแสงระหว่างด้านมากขึ้น ก้อนจะอ่านออกว่ามีปริมาตร ไม่ใช่แถบสีแบน */
     var lit=0.44+0.46*Math.abs(nx*0.78+nz*0.34);
