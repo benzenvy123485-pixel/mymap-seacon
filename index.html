@@ -18,6 +18,8 @@
      ค่าจะกลายเป็นไม่ถูกต้องทั้งตัวแปร แล้วขนาดทุกอย่างที่อิงมันจะพังพร้อมกันหมด */
   --u: min(1vw, 0.5625vh);
   --u: min(1vw, 0.5625dvh);
+  /* --u = 1% ของความกว้างเวทีเสมอ ไม่ว่าจอจะสัดส่วนไหน
+     เพราะเวทีกว้าง = min(100vw, 100dvh*9/16) ซึ่งเท่ากับ 100 เท่าของค่านี้พอดี */
   --f-display:"Prompt","Noto Sans Thai",system-ui,sans-serif;
   --f-body:"Prompt","Noto Sans Thai",system-ui,sans-serif;
   --paper:#EDE9DA; --paper-2:#F7F4EA; --paper-3:#E3DFCE;
@@ -28,9 +30,19 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:#D6D2C2}
+/* จอที่สูงกว่า 9:16 เช่นมือถือรุ่นใหม่ที่เป็น 9:19.5 หรือ 9:20
+   เวทีจะถูกยืดสูงเกินสัดส่วนที่ออกแบบไว้ หัวจอกับแผนผังจะเพี้ยน
+   จึงล็อกทั้งกว้างและสูง แล้วจัดกลางจอ ส่วนที่เหลือปล่อยเป็นขอบดำรอบ
+   ตู้จริงเป็น 9:16 พอดี จะไม่เห็นขอบเลย */
+body{display:flex;align-items:center;justify-content:center}
 body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smoothing:antialiased}
-.stage{position:relative;width:100vw;height:100dvh;max-width:calc(100dvh*9/16);
-  margin:0 auto;background:var(--paper);display:flex;flex-direction:column;overflow:hidden}
+.stage{
+  position:relative;
+  width:min(100vw, calc(100dvh * 9 / 16));
+  height:min(100dvh, calc(100vw * 16 / 9));
+  flex:0 0 auto;
+  background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
+}
 
 .head{padding:calc(var(--u)*4) calc(var(--u)*5) calc(var(--u)*1.8)}
 .topline{display:flex;align-items:center;gap:calc(var(--u)*2.2);flex-wrap:wrap}
@@ -45,7 +57,7 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .zone h1 b{font-weight:500}
 .tag{margin-top:calc(var(--u)*1.1);font-size:calc(var(--u)*2.7);color:var(--ink-soft)}
 
-.mapwrap{position:relative;flex:0 0 auto;height:43dvh}
+.mapwrap{position:relative;flex:0 0 auto;height:39dvh}
 #view{width:100%;height:100%;display:block;touch-action:none}
 .tools{position:absolute;right:calc(var(--u)*3);bottom:calc(var(--u)*3);
   display:flex;flex-direction:column;gap:calc(var(--u)*1.4)}
@@ -80,12 +92,17 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .scope{margin-top:calc(var(--u)*1.2);font-size:clamp(10px, calc(var(--u)*2.15), 20px);color:var(--olive)}
 .scope b{font-weight:400;color:var(--clay)}
 
-.cats{display:flex;gap:calc(var(--u)*1.4);overflow-x:auto;
-  padding:calc(var(--u)*1.4) calc(var(--u)*5) calc(var(--u)*.8);scrollbar-width:none}
-.cats::-webkit-scrollbar{display:none}
+/* แถบหมวด ตัดปัญหาด้วยการขึ้นบรรทัดใหม่ ไม่ใช่การเลื่อน
+   สิบปุ่มเรียงแถวเดียวกว้างราวสองเท่าของจอ เกินครึ่งจะอยู่นอกจอ
+   ถ้าใช้การเลื่อน ตู้ที่ต่อเมาส์จะเลื่อนไม่ได้เลยเพราะล้อเมาส์ไม่เลื่อนแนวนอน
+   และคนที่เดินมาใช้ก็ไม่มีทางรู้ว่ามีปุ่มซ่อนอยู่ทางขวา
+   ขึ้นบรรทัดใหม่แปลว่าทุกปุ่มอยู่ในจอเสมอ กดได้ทุกปุ่ม ไม่ต้องค้นหา */
+.cats{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1.3);
+  padding:calc(var(--u)*1.4) calc(var(--u)*5) calc(var(--u)*.8)}
 .cat{flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*1.1);
   border:1px solid var(--hair);background:transparent;border-radius:999px;
-  padding:calc(var(--u)*1.2) calc(var(--u)*2.4);font-family:var(--f-body);font-weight:300;
+  padding:calc(var(--u)*1.15) calc(var(--u)*2.1);font-family:var(--f-body);font-weight:300;
+  min-height:34px;
   font-size:clamp(11px, calc(var(--u)*2.5), 24px);color:var(--ink-soft);cursor:pointer;transition:all .22s var(--slow);white-space:nowrap}
 .cat i{width:calc(var(--u)*1.7);height:calc(var(--u)*1.7);border-radius:50%;display:block}
 .cat.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);font-weight:400}
@@ -264,9 +281,9 @@ var CATS = [
   {id:"dine",   name:"ร้านอาหาร", c:"#B3743F"},
   {id:"cafe",   name:"คาเฟ่",     c:"#A9764E"},
   {id:"fashion",name:"แฟชั่น",    c:"#C08A6A"},
-  {id:"shoe",   name:"รองเท้าและกระเป๋า", c:"#8E9B84"},
+  {id:"shoe",   name:"รองเท้า·กระเป๋า", c:"#8E9B84"},
   {id:"beauty", name:"ความงาม",   c:"#C4909C"},
-  {id:"pop",    name:"ของสะสมและบริการ", c:"#9A8FB0"},
+  {id:"pop",    name:"ของสะสม", c:"#9A8FB0"},
   {id:"tech",   name:"แกดเจ็ต",   c:"#7E93A6"},
   {id:"sport",  name:"กีฬา",      c:"#A8A05C"},
   {id:"jewel",  name:"เครื่องประดับ", c:"#94A5A8"}
@@ -279,7 +296,13 @@ CATS.forEach(function(c){ if(c.id) CAT[c.id] = c; });
       พิกัดเก็บเป็นพิกเซลของภาพผังต้นฉบับ แปลงเป็นเมตรตอนโหลด
       แต่ละชั้นมีสเกลของตัวเอง เพราะผังแต่ละหน้าวาดมาคนละขนาด
    ================================================================== */
-var CELL = 1.2;      /* ความละเอียดตารางเดิน หน่วยเมตร */
+var CELL = 0.4;      /* ความละเอียดตารางเดิน หน่วยเมตร
+                        เคยใช้ 1.2 เมตร กันชนรอบร้าน 1.8 เมตร
+                        รวมแล้วช่องว่างระหว่างแถวต้องกว้างเกิน 4.8 เมตรจึงจะมีที่เดิน
+                        ซึ่งกว้างกว่าทางเดินจริงในห้าง ผลคือ 29 ร้านไม่มีทางเดินติดด้านไหนเลย
+                        ประตูเลยตกไปอยู่ข้างหลัง แล้วเส้นทางวิ่งอ้อมหลังร้าน
+                        ลดเหลือ 0.4 เมตรพร้อมกันชน 0.5 เมตร เหลือร้านที่ถูกล้อมแค่ 5 ร้าน
+                        แลกกับเวลาปั้นผังเพิ่มจาก 0.2 เป็น 0.7 วินาที ซึ่งเกิดครั้งเดียวตอนโหลด */      /* ความละเอียดตารางเดิน หน่วยเมตร */
 var PAD  = 2.6;      /* ระยะเผื่อขอบพื้นชั้นจากแนวร้าน
                         เคยตั้ง 7 เมตร กลายเป็นทางเดินรอบนอกที่ของจริงไม่มี
                         แล้วเส้นทางวิ่งอ้อมหลังตึกแทนที่จะตัดตรง
@@ -303,7 +326,7 @@ function buildFloor(f){
     /* กันชนรอบร้าน กว้างกว่าครึ่งช่องตาราง
        ทำให้จุดกลางช่องที่เดินได้ห่างจากตัวร้านเสมอ
        เส้นที่ลากจากช่องหนึ่งไปอีกช่องจึงเฉี่ยวมุมร้านไม่ได้ */
-    sh.pad = cornersOf({cx:sh.cx, cz:sh.cz, w:sh.w+1.8, d:sh.d+1.8, rot:sh.rot});
+    sh.pad = cornersOf({cx:sh.cx, cz:sh.cz, w:sh.w+0.5, d:sh.d+0.5, rot:sh.rot});
     return sh;
   });
   shrinkOverlaps(f.shops);
@@ -552,32 +575,59 @@ function snapWalk(f,p){
   }
   return {x:f.x0+best.i*CELL, z:f.z0+best.j*CELL};
 }
-/* ประตูร้าน = ช่องเดินได้ที่ติดร้านและอยู่ฝั่งที่หันเข้าทางเดินหลัก
-   ถ้าเลือกแค่ช่องที่ใกล้ที่สุด ร้านแถวริมจะได้ประตูอยู่ด้านหลังตึก
-   แล้วเส้นทางจะวิ่งอ้อมไปหลังร้าน ซึ่งของจริงเดินไม่ได้ */
+/* ประตูร้าน — ต้องอยู่ด้านที่เป็นทางเดินจริง ไม่ใช่ด้านหลังตึก
+   เคยตัดสินจากทิศไปยังจุดกึ่งกลางของชั้น ซึ่งผิดกับร้านที่อยู่คนละฝั่งของจุดนั้น
+   45 จาก 153 ร้านได้ประตูผิดด้าน แล้วเส้นทางก็วิ่งอ้อมไปหลังร้านตาม
+
+   วิธีใหม่ วัดความโล่งของทั้งสี่ด้านเอง ด้านไหนมีทางเดินกว้างที่สุดคือหน้าร้าน
+   วัดจากค่าความห่างจากสิ่งกีดขวางของช่องที่อยู่ถัดออกไปจากผนังด้านนั้น
+   เป็นการถามตัวผังตรงๆ ว่าด้านไหนคนเดินได้ ไม่ต้องเดาจากรูปทรงรวม */
 function doorOf(f,s){
-  var c = cellOf(f,{x:s.cx,z:s.cz}), best=null;
-  var toCore = {x:f.core.x-s.cx, z:f.core.z-s.cz};
-  var cl = Math.hypot(toCore.x, toCore.z)||1;
-  toCore.x/=cl; toCore.z/=cl;
-  for(var r=1;r<30;r++){
-    for(var dj=-r;dj<=r;dj++) for(var di=-r;di<=r;di++){
-      if(Math.max(Math.abs(di),Math.abs(dj))!==r) continue;
-      var a=c.i+di, b=c.j+dj;
-      if(a<0||b<0||a>=f.nx||b>=f.nz) continue;
-      var t=idx(f,a,b);
-      if(!f.walk[t]) continue;
-      if(f.clear[t] < 1.05) continue;              /* ช่องที่ถูกบีบจนแคบ ไม่นับเป็นหน้าร้าน */
-      var x=f.x0+a*CELL, z=f.z0+b*CELL;
-      var vx=x-s.cx, vz=z-s.cz, vl=Math.hypot(vx,vz)||1;
-      var facing = (vx/vl)*toCore.x + (vz/vl)*toCore.z;   /* 1 = หันเข้าใจกลางชั้น */
-      if(f.reachOK && !f.reachOK[t]) continue;    /* ช่องที่เดินมาจากตู้ไม่ได้ ไม่นับเป็นประตู */
-      var d = Math.hypot(vx,vz) - f.clear[t]*0.4 - facing*7;
-      if(!best || d<best.d) best={d:d, x:x, z:z, i:a, j:b};
+  var best=null, i;
+  for(i=0;i<4;i++){
+    var a=s.corners[i], b=s.corners[(i+1)%4];
+    var nx=(b.z-a.z), nz=-(b.x-a.x), nl=Math.hypot(nx,nz)||1; nx/=nl; nz/=nl;
+    var mx=(a.x+b.x)/2, mz=(a.z+b.z)/2;
+    var sum=0, cnt=0, first=null;
+    for(var d=1.4; d<=10; d+=1.1){
+      var x=mx+nx*d, z=mz+nz*d;
+      var ci=Math.round((x-f.x0)/CELL), cj=Math.round((z-f.z0)/CELL);
+      if(ci<0||cj<0||ci>=f.nx||cj>=f.nz) continue;
+      var t=idx(f,ci,cj);
+      var okCell = f.walk[t] && (!f.reachOK || f.reachOK[t]);
+      sum += okCell ? f.clear[t] : 0;
+      cnt++;
+      if(okCell && !first && f.clear[t]>=1.05) first={x:x, z:z, i:ci, j:cj};
     }
-    if(best && r>=4) return {x:best.x, z:best.z, i:best.i, j:best.j};
+    if(!cnt || !first) continue;
+    var open=sum/cnt;
+    if(!best || open>best.open) best={open:open, p:first};
   }
-  return best ? {x:best.x, z:best.z, i:best.i, j:best.j} : {x:s.cx, z:s.cz, i:c.i, j:c.j};
+  if(best) return best.p;
+
+  /* ไม่มีด้านไหนเจอทางเดินภายใน 10 เมตรเลย
+     เกิดกับร้านที่ถูกร้านข้างเคียงล้อมสนิท ซึ่งเป็นผลจากผังที่ประมาณมา ไม่ใช่ของจริง
+     กรณีนี้ยิงรังสีออกไปไกลขึ้นทีละด้าน แล้วเลือกด้านที่เจอทางเดินก่อน
+     สำคัญที่ต้องยังเลือกเป็นราย "ด้าน" อยู่ ไม่ใช่คว้าช่องที่ใกล้ที่สุดรอบตัว
+     เพราะช่องที่ใกล้ที่สุดมักอยู่ข้างหลัง แล้วเส้นทางจะวิ่งอ้อมไปหลังร้าน */
+  var far=null;
+  for(i=0;i<4;i++){
+    var a2=s.corners[i], b2=s.corners[(i+1)%4];
+    var mx2=(a2.x+b2.x)/2, mz2=(a2.z+b2.z)/2;
+    var nx2=(b2.z-a2.z), nz2=-(b2.x-a2.x), nl2=Math.hypot(nx2,nz2)||1; nx2/=nl2; nz2/=nl2;
+    for(var d2=1.4; d2<=30; d2+=0.8){
+      var x2=mx2+nx2*d2, z2=mz2+nz2*d2;
+      var ci2=Math.round((x2-f.x0)/CELL), cj2=Math.round((z2-f.z0)/CELL);
+      if(ci2<0||cj2<0||ci2>=f.nx||cj2>=f.nz) break;
+      var t2=idx(f,ci2,cj2);
+      if(f.walk[t2] && (!f.reachOK || f.reachOK[t2]) && f.clear[t2]>=1.05){
+        if(!far || d2<far.d) far={d:d2, p:{x:x2, z:z2, i:ci2, j:cj2}};
+        break;
+      }
+    }
+  }
+  if(far) return far.p;
+  return {x:s.cx, z:s.cz, i:cellOf(f,{x:s.cx,z:s.cz}).i, j:cellOf(f,{x:s.cx,z:s.cz}).j};
 }
 
 /* ==================================================================
