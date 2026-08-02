@@ -37,7 +37,7 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .zone h1 b{font-weight:500}
 .tag{margin-top:calc(var(--u)*1.1);font-size:calc(var(--u)*2.7);color:var(--ink-soft)}
 
-.mapwrap{position:relative;flex:0 0 auto;height:37dvh}
+.mapwrap{position:relative;flex:0 0 auto;height:43dvh}
 #view{width:100%;height:100%;display:block;touch-action:none}
 .tools{position:absolute;right:calc(var(--u)*3);bottom:calc(var(--u)*3);
   display:flex;flex-direction:column;gap:calc(var(--u)*1.4)}
@@ -83,23 +83,23 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .cat.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);font-weight:400}
 
 .grid{flex:1;overflow-y:auto;overscroll-behavior:contain;display:grid;
-  grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1.8);
+  grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*1.4);
   padding:calc(var(--u)*1.4) calc(var(--u)*5) calc(var(--u)*5);scrollbar-width:none}
 .grid::-webkit-scrollbar{display:none}
 .card{background:var(--paper-2);border:1px solid var(--hair);border-radius:calc(var(--u)*1.5);
-  padding:calc(var(--u)*1.6) calc(var(--u)*.9) calc(var(--u)*1.3);cursor:pointer;text-align:center;
+  padding:calc(var(--u)*1.3) calc(var(--u)*.6) calc(var(--u)*1.1);cursor:pointer;text-align:center;
   transition:all .22s var(--slow);position:relative;overflow:hidden}
 .card:active{transform:scale(.965)}
 .card.on{background:var(--ink);border-color:var(--ink)}
 .card .bar{position:absolute;left:0;top:0;width:100%;height:calc(var(--u)*.55)}
-.mono{width:calc(var(--u)*8.4);height:calc(var(--u)*8.4);margin:calc(var(--u)*.5) auto 0;
+.mono{width:calc(var(--u)*7);height:calc(var(--u)*7);margin:calc(var(--u)*.4) auto 0;
   border-radius:calc(var(--u)*1.1);display:flex;align-items:center;justify-content:center;
-  font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*3);letter-spacing:.04em;color:var(--ink)}
+  font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*2.6);letter-spacing:.04em;color:var(--ink)}
 .card.on .mono{color:var(--paper-2)}
 .cname{margin-top:calc(var(--u)*1.1);font-size:calc(var(--u)*2.15);font-weight:400;
   line-height:1.3;height:calc(var(--u)*5.6);overflow:hidden}
 .card.on .cname{color:var(--paper-2)}
-.cunit{margin-top:calc(var(--u)*.4);font-size:calc(var(--u)*1.8);color:var(--olive);letter-spacing:.08em}
+.cunit{margin-top:calc(var(--u)*.3);font-size:calc(var(--u)*1.65);color:var(--olive);letter-spacing:.08em}
 .card.on .cunit{color:rgba(247,244,234,.55)}
 .empty{grid-column:1/-1;text-align:center;color:var(--olive);font-size:calc(var(--u)*2.7);
   padding:calc(var(--u)*6) 0;line-height:1.7}
@@ -242,7 +242,10 @@ CATS.forEach(function(c){ if(c.id) CAT[c.id] = c; });
       แต่ละชั้นมีสเกลของตัวเอง เพราะผังแต่ละหน้าวาดมาคนละขนาด
    ================================================================== */
 var CELL = 1.2;      /* ความละเอียดตารางเดิน หน่วยเมตร */
-var PAD  = 7;        /* ระยะเผื่อขอบพื้นชั้นจากแนวร้าน */
+var PAD  = 2.6;      /* ระยะเผื่อขอบพื้นชั้นจากแนวร้าน
+                        เคยตั้ง 7 เมตร กลายเป็นทางเดินรอบนอกที่ของจริงไม่มี
+                        แล้วเส้นทางวิ่งอ้อมหลังตึกแทนที่จะตัดตรง
+                        2.6 เมตรพอให้เห็นขอบพื้น แต่แคบกว่ากันชนรอบร้าน จึงเดินไม่ได้ */
 
 function buildFloor(f){
   var s = f.s, ox = 1e9, oy = 1e9;
@@ -253,8 +256,11 @@ function buildFloor(f){
   f.shops = f.units.map(function(u){
     var c = f.M(u[1], u[2]);
     var sh = {no:u[0], cx:c.x, cz:c.z, w:u[3]/s, d:u[4]/s, rot:u[5],
+              /* ความสูงตึกไม่ใช่ความสูงจริงของชั้น สูงจริงราว 5 เมตร
+                 แต่พอฉายลงจอ 9:16 ที่ต้องเห็นทั้งชั้น ตึกจะเหลือ 15 พิกเซล ดูเป็นเส้นขีด
+                 จึงยืดเป็น 9 เมตรให้ก้อนอ่านออกว่าเป็นก้อน สัดส่วนสูงต่อกว้างราว 1:2 */
               area:u[6], name:u[7], mono:u[8], cat:u[9], desc:u[10], picks:u[11]||[],
-              lvl:f.lvl, pop:0, h:4.3 + ((parseInt(u[0],10)*37) % 9) * 0.2};
+              lvl:f.lvl, pop:0, h: 9 + ((parseInt(u[0],10)*37) % 9) * 0.34};
     sh.corners = cornersOf(sh);
     /* กันชนรอบร้าน กว้างกว่าครึ่งช่องตาราง
        ทำให้จุดกลางช่องที่เดินได้ห่างจากตัวร้านเสมอ
@@ -270,11 +276,23 @@ function buildFloor(f){
   f.plate = expand(hull(pts), PAD);
 
   buildWalk(f);
+  coreOf(f);
+  f.shops.forEach(function(s2){ s2.door=null; });
   f.you = snapWalk(f, f.M(f.you[0], f.you[1]));
   f.conn = snapWalk(f, f.M(f.conn[0], f.conn[1]));
+  /* ทำแผนที่ว่าช่องไหนเดินมาจากจุดอ้างอิงได้บ้าง แล้วให้ประตูเลือกจากช่องเหล่านั้นเท่านั้น */
+  var st = nearestWalkCell(f, f.you);
+  f.reachOK = st ? flood(f, idx(f,st.i,st.j)).seen : null;
   f.shops.forEach(function(s2){ s2.door = doorOf(f, s2); });
 }
 
+/* ใจกลางชั้น = จุดกึ่งกลางของแนวร้านทั้งหมด
+   ใช้ตัดสินว่าด้านไหนของร้านคือหน้าร้าน ด้านไหนคือหลังร้าน */
+function coreOf(f){
+  var sx=0, sz=0;
+  f.shops.forEach(function(s){ sx+=s.cx; sz+=s.cz; });
+  f.core={x:sx/f.shops.length, z:sz/f.shops.length};
+}
 function cornersOf(s){
   var c = Math.cos(s.rot), n = Math.sin(s.rot), hw = s.w/2, hd = s.d/2;
   return [
@@ -404,6 +422,7 @@ function mainComponent(f){
         if(a<0||b<0||a>=f.nx||b>=f.nz) continue;
         var t=idx(f,a,b);
         if(seen[t]||!f.walk[t]) continue;
+        if(di && dj && (!f.walk[idx(f,a,j)] || !f.walk[idx(f,i,b)])) continue;
         seen[t]=1; q.push(t);
       }
     }
@@ -428,6 +447,9 @@ function flood(f, start){
       if(a<0||b<0||a>=f.nx||b>=f.nz) continue;
       var t=idx(f,a,b);
       if(seen[t]||!f.walk[t]) continue;
+      /* ห้ามตัดมุมทแยงทะลุร้าน ต้องใช้กติกาเดียวกับ A*
+         ไม่งั้นจะนับว่าช่องนั้นเดินถึงได้ทั้งที่ A* ไปไม่ได้จริง */
+      if(di && dj && (!f.walk[idx(f,a,j)] || !f.walk[idx(f,i,b)])) continue;
       seen[t]=1; q.push(t);
     }
   }
@@ -492,24 +514,32 @@ function snapWalk(f,p){
   }
   return {x:f.x0+best.i*CELL, z:f.z0+best.j*CELL};
 }
-/* ประตูร้าน = ช่องเดินได้ที่ติดกับร้านที่สุด */
+/* ประตูร้าน = ช่องเดินได้ที่ติดร้านและอยู่ฝั่งที่หันเข้าทางเดินหลัก
+   ถ้าเลือกแค่ช่องที่ใกล้ที่สุด ร้านแถวริมจะได้ประตูอยู่ด้านหลังตึก
+   แล้วเส้นทางจะวิ่งอ้อมไปหลังร้าน ซึ่งของจริงเดินไม่ได้ */
 function doorOf(f,s){
   var c = cellOf(f,{x:s.cx,z:s.cz}), best=null;
-  for(var r=1;r<28;r++){
+  var toCore = {x:f.core.x-s.cx, z:f.core.z-s.cz};
+  var cl = Math.hypot(toCore.x, toCore.z)||1;
+  toCore.x/=cl; toCore.z/=cl;
+  for(var r=1;r<30;r++){
     for(var dj=-r;dj<=r;dj++) for(var di=-r;di<=r;di++){
       if(Math.max(Math.abs(di),Math.abs(dj))!==r) continue;
       var a=c.i+di, b=c.j+dj;
       if(a<0||b<0||a>=f.nx||b>=f.nz) continue;
       var t=idx(f,a,b);
       if(!f.walk[t]) continue;
-      var x=f.x0+a*CELL, z=f.z0+b*CELL;
       if(f.clear[t] < 1.05) continue;              /* ช่องที่ถูกบีบจนแคบ ไม่นับเป็นหน้าร้าน */
-      var d=Math.hypot(x-s.cx, z-s.cz) - f.clear[t]*0.35;
+      var x=f.x0+a*CELL, z=f.z0+b*CELL;
+      var vx=x-s.cx, vz=z-s.cz, vl=Math.hypot(vx,vz)||1;
+      var facing = (vx/vl)*toCore.x + (vz/vl)*toCore.z;   /* 1 = หันเข้าใจกลางชั้น */
+      if(f.reachOK && !f.reachOK[t]) continue;    /* ช่องที่เดินมาจากตู้ไม่ได้ ไม่นับเป็นประตู */
+      var d = Math.hypot(vx,vz) - f.clear[t]*0.4 - facing*7;
       if(!best || d<best.d) best={d:d, x:x, z:z, i:a, j:b};
     }
-    if(best) return {x:best.x, z:best.z, i:best.i, j:best.j};
+    if(best && r>=4) return {x:best.x, z:best.z, i:best.i, j:best.j};
   }
-  return {x:s.cx, z:s.cz, i:c.i, j:c.j};
+  return best ? {x:best.x, z:best.z, i:best.i, j:best.j} : {x:s.cx, z:s.cz, i:c.i, j:c.j};
 }
 
 /* ==================================================================
@@ -539,10 +569,10 @@ function astar(f, a, b){
       var t=idx(f,x,z);
       if(!f.walk[t]||closed[t]) continue;
       if(di&&dj && (!f.walk[idx(f,x,j)] || !f.walk[idx(f,i,z)])) continue;  /* ห้ามตัดมุมทะลุร้าน */
-      /* ชิดร้านเกินไปก็แพง ลอยอยู่กลางที่โล่งห่างหน้าร้านก็แพง
-         ผลคือเส้นทางเดินกลางทางเดิน และเลาะไปตามแนวร้านเหมือนคนเดินจริง */
-      var pen = 1 + Math.max(0, 2.6 - f.clear[t]) * 0.55
-                  + Math.max(0, f.near[t] - 14) * 0.06;
+      /* ถ่วงเฉพาะตอนชิดร้านเกินไป เส้นทางจะเดินกลางทางเดินโดยไม่เบียดหน้าร้าน
+         เคยถ่วงเพิ่มตอนอยู่ห่างหน้าร้านด้วย หวังให้เลาะไปตามแนวร้าน
+         แต่กลายเป็นดันให้เดินอ้อมไปหลังตึก จึงตัดทิ้ง เหลือแค่หาทางที่สั้นที่สุด */
+      var pen = 1 + Math.max(0, 2.4 - f.clear[t]) * 0.5;
       var ng = g[cur.id] + ((di&&dj)?1.414:1)*CELL*pen;
       if(ng < g[t]){ g[t]=ng; prev[t]=cur.id; open.push({id:t, f:ng+hcost(x,z)}); }
     }
@@ -601,7 +631,7 @@ function framing(f){
   /* หลักป้ายบอกทาง จุดที่คุณอยู่ต้องอยู่ล่างจอเสมอ
      คำนวณมุมกล้องจากตำแหน่งตู้ ย้ายตู้ไปไหนกติกาก็ยังอยู่ */
   var a=anchor(f);
-  var g={tx:cx, tz:cz, yaw:Math.atan2(a.x-cx, a.z-cz), pitch:0.74, dist:Math.min(ZMAX, span*1.15)};
+  var g={tx:cx, tz:cz, yaw:Math.atan2(a.x-cx, a.z-cz), pitch:0.60, dist:Math.max(ZMIN, span*0.6)};
   return autoFit(f, g);
 }
 /* ถอยกล้องจนผังทั้งชั้นอยู่ในเฟรมพอดี ทำงานได้ทุกอัตราส่วนจอ
@@ -609,7 +639,7 @@ function framing(f){
 function autoFit(f, g){
   if(!W || !H) return g;
   var save=cam; cam=g;
-  for(var k=0;k<26;k++){
+  for(var k=0;k<60;k++){
     updateCam();
     var x0=1e9,x1=-1e9,y0=1e9,y1=-1e9, ok=true;
     for(var i=0;i<f.plate.length;i++){
@@ -617,8 +647,8 @@ function autoFit(f, g){
       if(!q){ ok=false; break; }
       if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y;
     }
-    if(ok && x0>W*0.04 && x1<W*0.96 && y0>H*0.04 && y1<H*0.95) break;
-    g.dist=Math.min(ZMAX, g.dist*1.07);
+    if(ok && x0>W*0.015 && x1<W*0.985 && y0>H*0.02 && y1<H*0.97) break;
+    g.dist=Math.min(ZMAX, g.dist*1.035);
     if(g.dist>=ZMAX) break;
   }
   /* เลื่อนเป้ากล้องตามแนวพื้น ให้จุดอ้างอิงตกที่ราว 62% จากบนของกรอบแผนผัง
@@ -642,13 +672,13 @@ function autoFit(f, g){
       if(r2.y<y0b)y0b=r2.y; if(r2.y>y1b)y1b=r2.y;
       if(r2.x<x0b)x0b=r2.x; if(r2.x>x1b)x1b=r2.x;
     }
-    if(!okb || y0b<H*0.03 || y1b>H*0.97 || x0b<W*0.03 || x1b>W*0.97){
+    if(!okb || y0b<H*0.015 || y1b>H*0.985 || x0b<W*0.012 || x1b>W*0.988){
       g.dist=Math.min(ZMAX, g.dist*1.06);
     }
   }
   /* รอบสุดท้าย ถอยกล้องอย่างเดียวจนไม่ล้นเฟรม ไม่ขยับเป้าแล้ว
      จุดอ้างอิงจะขยับเข้ากลางนิดหน่อย แต่ยังอยู่ครึ่งล่างตามกติกา */
-  for(var z=0; z<24; z++){
+  for(var z=0; z<50; z++){
     updateCam();
     var q0=1e9,q1=-1e9,w0=1e9,w1=-1e9,fine=true;
     for(var m3=0;m3<f.plate.length;m3++){
@@ -657,9 +687,9 @@ function autoFit(f, g){
       if(r3.y<q0)q0=r3.y; if(r3.y>q1)q1=r3.y;
       if(r3.x<w0)w0=r3.x; if(r3.x>w1)w1=r3.x;
     }
-    if(fine && q0>H*0.03 && q1<H*0.96 && w0>W*0.03 && w1<W*0.97) break;
+    if(fine && q0>H*0.015 && q1<H*0.975 && w0>W*0.012 && w1<W*0.988) break;
     if(g.dist>=ZMAX) break;
-    g.dist=Math.min(ZMAX, g.dist*1.05);
+    g.dist=Math.min(ZMAX, g.dist*1.03);
   }
   cam=save;
   return g;
@@ -780,12 +810,19 @@ function drawShop(s, labels){
     var a=c[i], b=c[(i+1)%4];
     var nx=-(b.z-a.z), nz=(b.x-a.x), nl=Math.hypot(nx,nz)||1; nx/=nl; nz/=nl;
     if(nx*(eye.x-s.cx)+nz*(eye.z-s.cz) <= 0) continue;
-    var lit=0.58+0.34*Math.abs(nx*0.78+nz*0.34);
+    /* ต่างแสงระหว่างด้านมากขึ้น ก้อนจะอ่านออกว่ามีปริมาตร ไม่ใช่แถบสีแบน */
+    var lit=0.44+0.46*Math.abs(nx*0.78+nz*0.34);
     poly([bot[i],bot[(i+1)%4],top[(i+1)%4],top[i]],
          sel ? shade("#23231F",1+lit) : shade(col,lit),
-         "rgba(35,35,31,.34)", 1);
+         "rgba(35,35,31,.42)", 1);
   }
-  poly(top, sel ? "#23231F" : col, sel ? "#F7F4EA" : "rgba(35,35,31,.28)", sel?2:1);
+  poly(top, sel ? "#23231F" : shade(col,1.06), sel ? "#F7F4EA" : "rgba(35,35,31,.32)", sel?2:1);
+  /* เงาทอดลงพื้น ช่วยให้ก้อนดูลอยขึ้นจากพื้นจริงๆ */
+  if(vis){
+    var sh=[];
+    for(var q=0;q<4;q++) sh.push(P(c[q].x + s.h*0.34, 0.03, c[q].z + s.h*0.2));
+    ctx.globalAlpha=0.12; poly(sh, "#23231F", null); ctx.globalAlpha=1;
+  }
   if(vis && s.door){
     var d0=P(s.door.x,0,s.door.z), d1=P(s.door.x,2.4,s.door.z);
     if(d0&&d1){
