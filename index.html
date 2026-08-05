@@ -172,27 +172,7 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .dclose{margin-left:auto;border:0;background:transparent;color:var(--olive);
   font-family:var(--f-display);font-size:calc(var(--u)*4.4);line-height:1;cursor:pointer}
 .ddesc{margin-top:calc(var(--u)*2.1);font-size:clamp(12px, calc(var(--u)*2.7), 26px);line-height:1.7;color:var(--ink-soft)}
-.dfacts{display:flex;gap:calc(var(--u)*2);margin-top:calc(var(--u)*2.6);
-  border-top:1px solid var(--hair);padding-top:calc(var(--u)*2.3)}
-.dfacts div{flex:1}
-.dfacts span{display:block;font-size:calc(var(--u)*1.95);color:var(--olive);letter-spacing:.12em}
-.dfacts b{display:block;font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*3);margin-top:calc(var(--u)*.5)}
-/* ---- รายการแนะนำ ---- */
-.dpicks{margin-top:calc(var(--u)*2.4);border-top:1px solid var(--hair);padding-top:calc(var(--u)*2.2)}
-.dpicks h4{font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*2.5);
-  letter-spacing:.02em;color:var(--olive);margin-bottom:calc(var(--u)*1.6)}
-.picks{display:flex;gap:calc(var(--u)*1.8)}
-.pick{flex:1;min-width:0}
-.pshot{width:100%;aspect-ratio:4/3;border-radius:calc(var(--u)*1.2);overflow:hidden;
-  background:var(--paper-3);display:block}
-.pshot canvas{width:100%;height:100%;display:block}
-.pname{margin-top:calc(var(--u)*1);font-size:clamp(10px, calc(var(--u)*2.15), 22px);
-  line-height:1.35;min-height:2.7em;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  word-break:break-word}
-.pprice{margin-top:calc(var(--u)*.3);font-family:var(--f-display);font-weight:400;
-  font-size:clamp(11px, calc(var(--u)*2.4), 24px);color:var(--clay)}
-.dway{margin-top:calc(var(--u)*2.2);font-size:calc(var(--u)*2.5);color:var(--ink);
+.dway{margin-top:calc(var(--u)*2.4);font-size:calc(var(--u)*2.5);color:var(--ink);
   background:var(--paper-3);border-radius:calc(var(--u)*1.3);padding:calc(var(--u)*1.8) calc(var(--u)*2.2);line-height:1.6}
 .dway b{font-weight:500;color:var(--clay)}
 
@@ -251,11 +231,6 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
       <button class="dclose" id="dClose" aria-label="ปิด">×</button>
     </div>
     <p class="ddesc" id="dDesc"></p>
-    <div class="dfacts">
-      <div><span>ยูนิต</span><b id="dUnit"></b></div>
-      <div><span>ขนาด</span><b id="dArea"></b></div>
-      <div><span>ระยะเดิน</span><b id="dDist"></b></div>
-    </div>
     <div class="dpicks">
       <h4 id="dPickTitle">เมนูแนะนำ</h4>
       <div class="picks" id="dPicks"></div>
@@ -1104,7 +1079,7 @@ function renderGrid(){
       '<span class="bar" style="background:'+c+'"></span>'+
       '<div class="mono" style="background:'+(selected===s?"rgba(247,244,234,.14)":c+"33")+'">'+s.mono+'</div>'+
       '<div class="cname">'+s.name+'</div>'+
-      '<div class="cunit">L'+s.lvl+' · '+s.no+'</div></div>';
+      '<div class="cunit">ชั้น '+s.lvl+'</div></div>';
   }).join("");
   Array.prototype.forEach.call($("grid").children,function(b){
     if(!b.getAttribute) return;
@@ -1215,6 +1190,8 @@ function tint(hex,k){
   var t=k-1;
   return "rgb("+Math.round(r+(255-r)*t)+","+Math.round(gg+(255-gg)*t)+","+Math.round(b+(255-b)*t)+")";
 }
+/* ยังไม่ได้ใช้ เก็บไว้เผื่อวันหน้าเปิดแสดงราคา
+   ตอนนี้ปิดไว้เพราะยังไม่มีเจ้าภาพอัปเดตราคา */
 function baht(n){
   if(n===0) return "ฟรี";
   return n.toLocaleString("th-TH")+" ฿";
@@ -1223,8 +1200,12 @@ function renderPicks(s){
   $("dPickTitle").textContent = (s.cat==="dine"||s.cat==="cafe") ? "เมนูแนะนำ" : "สินค้าและบริการแนะนำ";
   var box=$("dPicks");
   box.innerHTML = s.picks.map(function(p,i){
+    /* โชว์แค่ชื่อกับภาพ ไม่โชว์ราคา
+       ราคาในห้างเปลี่ยนบ่อยกว่าตำแหน่งร้านมาก ถ้าตู้โชว์ราคาผิด
+       คนจะไปโวยที่หน้าร้าน ไม่ใช่ที่ตู้ ร้านค้าจะเป็นคนรับผลแทน
+       ตัวเลขราคายังอยู่ในข้อมูล ถ้าวันหน้ามีคนดูแลจริงค่อยเปิดใช้ */
     return '<div class="pick"><span class="pshot"><canvas id="pk'+i+'" width="240" height="180"></canvas></span>'+
-           '<div class="pname">'+p[0]+'</div><div class="pprice">'+baht(p[1])+'</div></div>';
+           '<div class="pname">'+p[0]+'</div></div>';
   }).join("");
   s.picks.forEach(function(p,i){
     var c=$("pk"+i);
@@ -1263,9 +1244,6 @@ function select(s, fromMap){
   $("dName").textContent=s.name;
   $("dKind").textContent=(CAT[s.cat]?CAT[s.cat].name:"")+" · ชั้น "+s.lvl+" "+cur.zone;
   $("dDesc").textContent=s.desc;
-  $("dUnit").textContent=s.no;
-  $("dArea").textContent=s.area.toFixed(0)+" ตร.ม.";
-  $("dDist").textContent=(walkM!==null? walkM+" ม." : "—");
   renderPicks(s);
   $("dWay").innerHTML=legNote;
   $("detail").className="detail on";
