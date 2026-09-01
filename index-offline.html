@@ -51,18 +51,19 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
   background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
 }
 
-.head{padding:calc(var(--u)*4) calc(var(--u)*5) calc(var(--u)*1.8)}
+.head{padding:calc(var(--u)*3) calc(var(--u)*5) calc(var(--u)*1.2)}
 .topline{display:flex;align-items:center;gap:calc(var(--u)*2.2);flex-wrap:wrap}
 .eyebrow{font-size:calc(var(--u)*2.05);font-weight:300;letter-spacing:.4em;
   text-transform:uppercase;color:var(--olive)}
 .badge{border:1px solid var(--clay);color:var(--clay);border-radius:999px;
   padding:calc(var(--u)*.65) calc(var(--u)*1.9);font-size:calc(var(--u)*1.85);letter-spacing:.1em;white-space:nowrap}
-.zone{display:flex;align-items:baseline;gap:calc(var(--u)*2.4);margin-top:calc(var(--u)*1)}
+.zone{display:flex;align-items:baseline;gap:calc(var(--u)*2.4);margin-top:calc(var(--u)*.6)}
 .zone .lvl{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*4.2);
   color:var(--clay);letter-spacing:.06em}
-.zone h1{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*7.6);letter-spacing:-.005em;line-height:1}
+.zone h1{font-family:var(--f-display);font-weight:200;font-size:clamp(20px, calc(var(--u)*6.4), 62px);letter-spacing:-.005em;line-height:1}
 .zone h1 b{font-weight:500}
-.tag{margin-top:calc(var(--u)*1.1);font-size:calc(var(--u)*2.7);color:var(--ink-soft)}
+.tag{margin-top:calc(var(--u)*.7);font-size:clamp(11px, calc(var(--u)*2.5), 22px);color:var(--ink-soft);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .mapwrap{position:relative;flex:0 0 auto;height:39dvh}
 #view{width:100%;height:100%;display:block;touch-action:none}
@@ -99,13 +100,25 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .scope{margin-top:calc(var(--u)*1.2);font-size:clamp(10px, calc(var(--u)*2.15), 20px);color:var(--olive)}
 .scope b{font-weight:400;color:var(--clay)}
 
-/* แถบหมวด ตัดปัญหาด้วยการขึ้นบรรทัดใหม่ ไม่ใช่การเลื่อน
-   สิบปุ่มเรียงแถวเดียวกว้างราวสองเท่าของจอ เกินครึ่งจะอยู่นอกจอ
-   ถ้าใช้การเลื่อน ตู้ที่ต่อเมาส์จะเลื่อนไม่ได้เลยเพราะล้อเมาส์ไม่เลื่อนแนวนอน
-   และคนที่เดินมาใช้ก็ไม่มีทางรู้ว่ามีปุ่มซ่อนอยู่ทางขวา
-   ขึ้นบรรทัดใหม่แปลว่าทุกปุ่มอยู่ในจอเสมอ กดได้ทุกปุ่ม ไม่ต้องค้นหา */
-.cats{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1.3);
-  padding:calc(var(--u)*1.4) calc(var(--u)*5) calc(var(--u)*.8)}
+/* แถบหมวด เลื่อนซ้ายขวาแถวเดียว
+   เคยทำเป็นขึ้นบรรทัดใหม่ เพราะกลัวคนไม่รู้ว่ามีปุ่มซ่อนทางขวา
+   แต่สิบเอ็ดปุ่มกินสี่บรรทัดคือ 202 พิกเซล ขณะที่ตารางร้านเหลือแค่ 477
+   จึงกลับมาเลื่อน แต่แก้ข้อเสียเดิมสองข้อไปด้วย
+   หนึ่ง มีปุ่มลูกศรสองข้าง ตู้ที่ต่อเมาส์จึงเลื่อนได้ ล้อเมาส์ไม่ต้องใช้
+   สอง ขอบทั้งสองข้างไล่จางเป็นพื้นหลัง เห็นแล้วรู้ว่ายังมีของต่อไปอีก */
+.catwrap{position:relative;display:flex;align-items:center;
+  padding:calc(var(--u)*1.2) calc(var(--u)*2.4) calc(var(--u)*.6)}
+.catnav{flex:0 0 auto;width:calc(var(--u)*5.2);height:calc(var(--u)*5.2);
+  min-width:26px;min-height:26px;border-radius:50%;
+  border:1px solid var(--hair);background:var(--paper);color:var(--ink);
+  font-family:var(--f-display);font-size:calc(var(--u)*2.8);line-height:1;cursor:pointer;z-index:2}
+.catnav:disabled{opacity:.25;cursor:default}
+.catnav:active{background:var(--paper-3)}
+.cats{flex:1;min-width:0;display:flex;flex-wrap:nowrap;gap:calc(var(--u)*1.3);
+  overflow-x:auto;scroll-behavior:smooth;scrollbar-width:none;
+  padding:calc(var(--u)*.6) calc(var(--u)*1.6);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--u)*2),#000 calc(100% - var(--u)*2),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 calc(var(--u)*2),#000 calc(100% - var(--u)*2),transparent 100%)}
 .cat{flex:0 0 auto;display:flex;align-items:center;gap:calc(var(--u)*1.1);
   border:1px solid var(--hair);background:transparent;border-radius:999px;
   padding:calc(var(--u)*1.15) calc(var(--u)*2.1);font-family:var(--f-body);font-weight:300;
@@ -477,7 +490,11 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
     </div>
     <div class="scope" id="scope"></div>
   </div>
-  <div class="cats" id="cats"></div>
+  <div class="catwrap">
+    <button class="catnav" id="catL" aria-label="เลื่อนซ้าย">‹</button>
+    <div class="cats" id="cats"></div>
+    <button class="catnav" id="catR" aria-label="เลื่อนขวา">›</button>
+  </div>
   <div class="grid" id="grid"></div>
   <section class="detail" id="detail" aria-live="polite">
     <div class="dtop">
@@ -1484,6 +1501,7 @@ function renderCats(){
       cat=b.getAttribute("data-cat"); renderCats(); renderGrid(); kick();
     });
   });
+  catSync();
 }
 /* ==================================================================
    9b. ภาพประกอบรายการแนะนำ
@@ -1912,6 +1930,7 @@ function pickAt(sx, sy){
        ซึ่งใช้ได้ก็จริงแต่คนไม่รู้ว่าต้องทำอย่างนั้น และถ้าร้านต้นทางอยู่คนละชั้น
        ต้องสลับชั้นไปหาเองก่อน แผงนี้พิมพ์ชื่อค้นได้ทุกชั้นในที่เดียว
    ================================================================== */
+var catSync=function(){};
 var rpFor="from";       /* กำลังเลือกช่องไหนอยู่ from หรือ to */
 var dlgWasOpen=false;   /* เปิดแผงเลือกร้านมาจากหน้าต่างนำทางหรือเปล่า */
 var rpLvl=0;            /* กรองชั้นในแผงเลือกร้าน 0 = ทุกชั้น */
@@ -2123,6 +2142,22 @@ $("sClose").addEventListener("click", closeSteps);
 })();
 $("sPrev").addEventListener("click", function(){ if(stepAt>0){ stepAt--; showStep(); kick(); } });
 $("sNext").addEventListener("click", function(){ if(stepAt<plan.steps.length-1){ stepAt++; showStep(); kick(); } });
+/* ปุ่มลูกศรเลื่อนแถบหมวด จำเป็นเพราะตู้ที่ต่อเมาส์เลื่อนแนวนอนด้วยล้อไม่ได้
+   และดับปุ่มเมื่อสุดทางแล้ว จะได้รู้ว่าหมดแค่นี้ */
+(function(){
+  var box=$("cats"), L=$("catL"), R=$("catR");
+  function step(dir){ box.scrollLeft += dir * box.clientWidth * 0.7; setTimeout(sync,320); }
+  function sync(){
+    var max=box.scrollWidth-box.clientWidth;
+    L.disabled = box.scrollLeft<=2;
+    R.disabled = box.scrollLeft>=max-2;
+  }
+  L.addEventListener("click",function(){ step(-1); kick(); });
+  R.addEventListener("click",function(){ step(1); kick(); });
+  box.addEventListener("scroll", sync);
+  window.addEventListener("resize", sync);
+  catSync = sync;
+})();
 $("navBtn").addEventListener("click", openDlg);
 $("rdClose").addEventListener("click", closeDlg);
 $("veil").addEventListener("click", closeDlg);
