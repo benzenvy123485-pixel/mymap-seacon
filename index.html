@@ -351,7 +351,24 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .rphead span{flex:1;font-family:var(--f-display);font-weight:400;
   font-size:clamp(12px, calc(var(--u)*3), 26px);color:var(--ink)}
 .rpbox{margin-bottom:calc(var(--u)*1.6)}
-.rplist{max-height:44dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+/* แถบกรองชั้นในแผงเลือกร้าน 153 ร้านในลิสต์เดียวเลื่อนหาไม่ไหว
+   กรองชั้นก่อนเหลือ 26–50 ร้าน แล้วยังแบ่งหัวหมวดซ้อนอีกชั้น */
+.rpfl{display:flex;gap:calc(var(--u)*1.2);margin-bottom:calc(var(--u)*1.4)}
+.rpfl button{flex:1;border:1px solid var(--hair);background:transparent;
+  border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2) 0;min-height:32px;
+  font-family:var(--f-body);font-weight:300;font-size:clamp(10px, calc(var(--u)*2.2), 20px);
+  color:var(--ink-soft);cursor:pointer}
+.rpfl button.on{background:var(--ink);border-color:var(--ink);color:var(--paper-2);font-weight:400}
+.rphead2{display:flex;align-items:center;gap:calc(var(--u)*1.4);
+  padding:calc(var(--u)*1.6) 0 calc(var(--u)*.8);
+  position:sticky;top:0;background:var(--paper-2);z-index:1}
+.rphead2 i{width:calc(var(--u)*1.6);height:calc(var(--u)*1.6);min-width:7px;min-height:7px;
+  border-radius:50%;display:block;flex:0 0 auto}
+.rphead2 b{font-family:var(--f-display);font-weight:400;
+  font-size:clamp(10px, calc(var(--u)*2.3), 20px);color:var(--olive);letter-spacing:.02em}
+.rphead2 em{margin-left:auto;font-style:normal;
+  font-size:clamp(9px, calc(var(--u)*1.9), 17px);color:var(--olive)}
+.rplist{max-height:40dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .rplist::-webkit-scrollbar{display:none}
 .ritem{display:flex;align-items:center;gap:calc(var(--u)*2);width:100%;text-align:left;
   border:0;border-bottom:1px solid var(--hair);background:transparent;
@@ -508,6 +525,7 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
       <input id="rpQ" type="search" placeholder="พิมพ์ชื่อร้าน หรือ หมวด" autocomplete="off">
       <button class="qclear" id="rpClear" aria-label="ล้าง">×</button>
     </div>
+    <div class="rpfl" id="rpFl"></div>
     <div class="rplist" id="rpList"></div>
   </section>
 
@@ -1815,7 +1833,8 @@ function openDlg(){
   $("detail").className="detail"; syncBar(); kick();
 }
 function closeDlg(){
-  $("veil").className="veil"; $("rDlg").className="rdlg";
+  dlgWasOpen=false;
+  $("veil").className="veil"; $("rDlg").className="rdlg"; $("rPanel").className="rpanel";
   if(selected) $("detail").className="detail on";
   kick();
 }
@@ -1888,6 +1907,8 @@ function pickAt(sx, sy){
        ต้องสลับชั้นไปหาเองก่อน แผงนี้พิมพ์ชื่อค้นได้ทุกชั้นในที่เดียว
    ================================================================== */
 var rpFor="from";       /* กำลังเลือกช่องไหนอยู่ from หรือ to */
+var dlgWasOpen=false;   /* เปิดแผงเลือกร้านมาจากหน้าต่างนำทางหรือเปล่า */
+var rpLvl=0;            /* กรองชั้นในแผงเลือกร้าน 0 = ทุกชั้น */
 
 function allShops(){
   var out=[];
@@ -1896,28 +1917,53 @@ function allShops(){
 }
 function openPicker(which){
   rpFor=which;
+  /* ซ่อนหน้าต่างนำทางไว้ก่อน ไม่งั้นจะมีแผงซ้อนกันสองชั้น
+     เดิม popup อยู่ z-index 10 ส่วนแผงเลือกร้านอยู่ 9 แผงจึงโผล่อยู่ข้างหลัง
+     กดเลือกร้านไม่ได้ และคนไม่รู้ว่าเกิดอะไรขึ้น */
+  dlgWasOpen = $("rDlg").className.indexOf("on")>=0;
+  $("rDlg").className="rdlg";
   $("rpTitle").textContent = which==="from" ? "เลือกจุดเริ่มต้น" : "เลือกร้านปลายทาง";
-  $("rpQ").value=""; $("rpClear").className="qclear";
+  $("rpQ").value=""; $("rpClear").className="qclear"; rpLvl=0;
   renderPicker();
   $("rPanel").className="rpanel on";
   kick();
 }
-function closePicker(){ $("rPanel").className="rpanel"; kick(); }
+function closePicker(){
+  $("rPanel").className="rpanel";
+  if(dlgWasOpen){ $("rDlg").className="rdlg on"; }   /* กลับไปหน้าต่างนำทางตามเดิม */
+  kick();
+}
 
 function renderPicker(){
   var q=$("rpQ").value.trim().toLowerCase();
+
+  /* แถบกรองชั้น ตอนพิมพ์ค้นจะซ่อนไป เพราะคนพิมพ์ค้นแล้วอยากได้ทุกชั้น */
+  var fl="";
+  if(!q){
+    fl += '<button data-lvl="0" class="'+(rpLvl===0?"on":"")+'">ทุกชั้น</button>';
+    FLOORS.forEach(function(f){
+      fl += '<button data-lvl="'+f.lvl+'" class="'+(rpLvl===f.lvl?"on":"")+'">ชั้น '+f.lvl+'</button>';
+    });
+  }
+  $("rpFl").innerHTML=fl;
+  Array.prototype.forEach.call($("rpFl").children,function(b2){
+    b2.addEventListener("click",function(){
+      rpLvl=parseInt(b2.getAttribute("data-lvl"),10); renderPicker();
+    });
+  });
+
   var list=allShops().filter(function(s){
     if(rpFor==="from" && selected && s===selected) return false;   /* ต้นทางซ้ำปลายทางไม่ได้ */
     if(rpFor==="to" && origin && s===origin) return false;
+    if(!q && rpLvl && s.lvl!==rpLvl) return false;
     if(!q) return true;
     var hay=(s.name+" "+s.desc+" "+(CAT[s.cat]?CAT[s.cat].name:"")).toLowerCase();
     return hay.indexOf(q)>=0;
   });
-  list.sort(function(a,b){ return (a.lvl-b.lvl) || a.name.localeCompare(b.name,"th"); });
 
   var html="";
   /* จุดที่ตู้ตั้งอยู่ ปักไว้บนสุดเสมอในช่องต้นทาง เพราะเป็นค่าที่คนใช้บ่อยที่สุด */
-  if(rpFor==="from" && !q){
+  if(rpFor==="from" && !q && (!rpLvl || rpLvl===KIOSK_LVL)){
     var k=floorOf(KIOSK_LVL);
     html += '<button class="ritem" data-kiosk="1">'+
             '<span class="rimono" style="background:rgba(192,112,63,.16);color:#C0703F">◉</span>'+
@@ -1925,27 +1971,47 @@ function renderPicker(){
             '<span class="rimeta">ชั้น '+k.lvl+' · '+k.zone+'</span></span>'+
             '<span class="riflag">ค่าตั้งต้น</span></button>';
   }
-  if(!list.length && !html){
-    $("rpList").innerHTML='<div class="rpempty">ไม่พบร้านที่ตรงกับที่ค้นหา<br>ลองพิมพ์คำสั้นลง</div>';
+
+  function itemOf(s){
+    var c=CAT[s.cat]?CAT[s.cat].c:"#C7BFA8";
+    return '<button class="ritem" data-no="'+s.no+'">'+
+           '<span class="rimono" style="background:'+c+'33">'+s.mono+'</span>'+
+           '<span class="ribody"><span class="riname">'+s.name+'</span>'+
+           '<span class="rimeta">'+(CAT[s.cat]?CAT[s.cat].name:"")+' · ชั้น '+s.lvl+'</span></span>'+
+           '</button>';
+  }
+
+  if(q){
+    /* พิมพ์ค้นแล้ว เรียงตามชั้นแล้วชื่อ ไม่ต้องแบ่งหมวด เพราะผลไม่กี่รายการอยู่แล้ว */
+    list.sort(function(a2,b2){ return (a2.lvl-b2.lvl) || a2.name.localeCompare(b2.name,"th"); });
+    list.forEach(function(s){ html += itemOf(s); });
+  } else {
+    /* ไม่ได้ค้น แบ่งเป็นหมวด เรียงหมวดที่มีร้านเยอะไว้บน */
+    var g={}, order=[];
+    list.forEach(function(s){ if(!g[s.cat]){ g[s.cat]=[]; order.push(s.cat); } g[s.cat].push(s); });
+    order.sort(function(x,y){ return g[y].length-g[x].length; });
+    order.forEach(function(cid){
+      var c=CAT[cid]?CAT[cid].c:"#C7BFA8";
+      html += '<div class="rphead2"><i style="background:'+c+'"></i>'+
+              '<b>'+(CAT[cid]?CAT[cid].name:"อื่นๆ")+'</b><em>'+g[cid].length+' ร้าน</em></div>';
+      g[cid].sort(function(a2,b2){ return (a2.lvl-b2.lvl) || a2.name.localeCompare(b2.name,"th"); });
+      g[cid].forEach(function(s){ html += itemOf(s); });
+    });
+  }
+
+  if(!html){
+    $("rpList").innerHTML='<div class="rpempty">ไม่พบร้านที่ตรงกับที่ค้นหา<br>ลองพิมพ์คำสั้นลง หรือเลือกชั้นอื่น</div>';
     return;
   }
-  list.forEach(function(s){
-    var c=CAT[s.cat]?CAT[s.cat].c:"#C7BFA8";
-    html += '<button class="ritem" data-no="'+s.no+'">'+
-            '<span class="rimono" style="background:'+c+'33">'+s.mono+'</span>'+
-            '<span class="ribody"><span class="riname">'+s.name+'</span>'+
-            '<span class="rimeta">'+(CAT[s.cat]?CAT[s.cat].name:"")+' · ชั้น '+s.lvl+'</span></span>'+
-            '</button>';
-  });
   $("rpList").innerHTML=html;
   $("rpList").scrollTop=0;
-  Array.prototype.forEach.call($("rpList").children,function(b){
-    if(!b.getAttribute) return;
-    b.addEventListener("click",function(){
+  Array.prototype.forEach.call($("rpList").children,function(b2){
+    if(!b2.getAttribute) return;
+    var kiosk=b2.getAttribute("data-kiosk"), no=b2.getAttribute("data-no");
+    if(!kiosk && !no) return;
+    b2.addEventListener("click",function(){
       var s=null;
-      if(b.getAttribute("data-kiosk")) s=null;
-      else {
-        var no=b.getAttribute("data-no");
+      if(!kiosk){
         FLOORS.forEach(function(f){ f.shops.forEach(function(x){ if(x.no===no) s=x; }); });
         if(!s) return;
       }
@@ -1953,17 +2019,21 @@ function renderPicker(){
     });
   });
 }
+
 function applyPick(s){
-  closePicker();
+  $("rPanel").className="rpanel";
   if(rpFor==="from"){
     origin=s;
-    if(selected){ select(selected); if($("rDlg").className.indexOf("on")>=0) $("detail").className="detail"; }
+    if(selected) select(selected);
     syncBar();
+    /* ตั้งต้นทางเสร็จ กลับไปหน้าต่างนำทางเพื่อเลือกปลายทางต่อ */
+    if(dlgWasOpen){ $("rDlg").className="rdlg on"; $("detail").className="detail"; }
     if(!selected && s) toast("ตั้งต้นทางแล้ว · เลือกร้านปลายทางต่อ");
   } else {
     if(!s) return;
+    dlgWasOpen=false;
     select(s);
-    closeDlg();
+    closeDlg();          /* เลือกปลายทางแล้วจบ ปิดทั้งแผงและหน้าต่าง เห็นแผนที่เลย */
   }
 }
 function swapEnds(){
