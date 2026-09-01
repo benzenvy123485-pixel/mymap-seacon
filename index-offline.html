@@ -278,12 +278,48 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
 .sitem.now b{color:var(--clay)}
 .sitem.now span{color:var(--ink)}
 
-/* ---- แถบนำทางถาวร ---- */
-.navbar{padding:calc(var(--u)*2.2) calc(var(--u)*5) calc(var(--u)*1.4);
-  border-bottom:1px solid var(--hair)}
-.nsum{max-height:0;overflow:hidden;transition:max-height .34s var(--slow)}
-.navbar.ready .nsum{max-height:calc(var(--u)*22);overflow:visible}
-.stage.navi .navbar{display:none}
+/* ---- popup นำทาง ----
+   เดิมเป็นแถบถาวรใต้แผนผัง แต่หน้าจอมีแถบแนวนอนซ้อนกันถึงเจ็ดชั้นอยู่แล้ว
+   คือ หัวจอ แผนผัง แถบนำทาง แถบชั้น ช่องค้นหา ปุ่มหมวด ตารางร้าน
+   เพิ่มอีกแถบแล้วอ่านไม่ออกว่าอะไรเป็นอะไร จึงย้ายมาเป็นหน้าต่างเด้ง
+   เรียกจากปุ่มบนแผนผังหรือจากปุ่มในแผงร้าน */
+.veil{position:absolute;inset:0;background:rgba(35,35,31,.32);z-index:9;
+  opacity:0;pointer-events:none;transition:opacity .3s var(--slow)}
+.veil.on{opacity:1;pointer-events:auto}
+.rdlg{position:absolute;left:calc(var(--u)*4);right:calc(var(--u)*4);bottom:calc(var(--u)*10);
+  z-index:10;background:var(--paper-2);border-radius:calc(var(--u)*2.6);
+  padding:calc(var(--u)*3.4) calc(var(--u)*3.6) calc(var(--u)*3.6);
+  box-shadow:0 calc(var(--u)*2) calc(var(--u)*7) rgba(35,35,31,.24);
+  opacity:0;transform:translateY(calc(var(--u)*4)) scale(.97);pointer-events:none;
+  transition:opacity .3s var(--slow),transform .3s var(--slow)}
+.rdlg.on{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.rdhead{display:flex;align-items:center;margin-bottom:calc(var(--u)*2.2)}
+.rdhead span{flex:1;font-family:var(--f-display);font-weight:400;
+  font-size:clamp(13px, calc(var(--u)*3.2), 28px);color:var(--ink)}
+
+/* ---- ปุ่มนำทางลอยบนแผนผัง ---- */
+.navbtn{position:absolute;left:calc(var(--u)*4);bottom:calc(var(--u)*3.4);
+  display:flex;align-items:center;gap:calc(var(--u)*1.4);
+  border:1px solid var(--hair);background:rgba(247,244,234,.92);
+  border-radius:999px;padding:calc(var(--u)*1.5) calc(var(--u)*3);
+  font-family:var(--f-body);font-weight:400;font-size:clamp(11px, calc(var(--u)*2.4), 21px);
+  color:var(--ink);cursor:pointer;min-height:36px}
+.navbtn:active{background:var(--paper-3)}
+.stage.navi .navbtn{display:none}
+
+/* ---- ท้ายแผงร้าน ---- */
+.dfoot{margin-top:calc(var(--u)*2.4);border-top:1px solid var(--hair);padding-top:calc(var(--u)*2)}
+.dway2{font-size:clamp(11px, calc(var(--u)*2.5), 22px);color:var(--ink);
+  background:var(--paper-3);border-radius:calc(var(--u)*1.3);
+  padding:calc(var(--u)*1.6) calc(var(--u)*2.2);line-height:1.6}
+.dway2 b{font-weight:500;color:var(--clay)}
+.dbtns{display:flex;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.6)}
+.dbtns .dgo{flex:1.6;margin-top:0}
+.dghost{flex:1;border:1px solid var(--hair);background:transparent;
+  border-radius:calc(var(--u)*1.4);color:var(--ink);cursor:pointer;
+  font-family:var(--f-body);font-weight:400;font-size:clamp(11px, calc(var(--u)*2.5), 22px);
+  padding:calc(var(--u)*2.2) 0;min-height:42px}
+.dghost:active{background:var(--paper-3)}
 
 /* ---- ช่องต้นทาง–ปลายทาง แบบสองช่องมีปุ่มสลับ ---- */
 .rfields{display:flex;align-items:stretch;gap:calc(var(--u)*2)}
@@ -405,29 +441,12 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
       <button class="tool" id="home" aria-label="กลับมุมมองเริ่มต้น">⌂</button>
     </div>
     <div class="hint" id="hint">จิ้มที่ร้านเพื่อดูรายละเอียด · ลากเพื่อหมุน</div>
+    <button class="navbtn" id="navBtn">⇄ นำทางจากร้านอื่น</button>
     <div class="fcard" id="fCard">
       <div class="ficon" id="fIcon"></div>
       <div class="fbody"><div class="fhead" id="fHead"></div><div class="ftext" id="fText"></div></div>
     </div>
   </div>
-
-  <!-- แถบนำทาง อยู่ใต้แผนผังตลอดเวลา ไม่ได้ซ่อนอยู่ในแผงร้าน
-       เหตุผลที่ไม่วางไว้บนสุดแบบแอปมือถือ เพราะจอ 9:16 ตั้งพื้น
-       ขอบบนสูงเกินระดับตาคนไทยทั่วไป ของที่ต้องกดต้องอยู่ครึ่งล่างเสมอ -->
-  <section class="navbar" id="navBar">
-    <div class="rfields">
-      <div class="rdots"><span class="rd o"></span><span class="rl"></span><span class="rd d"></span></div>
-      <div class="rcol">
-        <button class="rpick" id="rFrom"><span>จุดที่คุณยืน</span></button>
-        <button class="rpick" id="rTo"><span class="ph">เลือกร้านปลายทาง</span></button>
-      </div>
-      <button class="rswap" id="rSwap" aria-label="สลับต้นทางปลายทาง">⇅</button>
-    </div>
-    <div class="nsum" id="nSum">
-      <div class="dway" id="dWay"></div>
-      <button class="dgo" id="dSteps">เริ่มนำทาง</button>
-    </div>
-  </section>
 
   <nav class="floors" id="floors"></nav>
   <div class="find">
@@ -454,6 +473,31 @@ body{font-family:var(--f-body);font-weight:300;color:var(--ink);-webkit-font-smo
       <h4 id="dPickTitle">เมนูแนะนำ</h4>
       <div class="picks" id="dPicks"></div>
     </div>
+    <div class="dfoot">
+      <div class="dway2" id="dWay2"></div>
+      <div class="dbtns">
+        <button class="dghost" id="dFrom">เปลี่ยนต้นทาง</button>
+        <button class="dgo" id="dGo2">ดูขั้นตอนการเดิน</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="veil" id="veil"></div>
+  <section class="rdlg" id="rDlg" aria-live="polite">
+    <div class="rdhead">
+      <span>นำทาง</span>
+      <button class="sclose" id="rdClose" aria-label="ปิด">×</button>
+    </div>
+    <div class="rfields">
+      <div class="rdots"><span class="rd o"></span><span class="rl"></span><span class="rd d"></span></div>
+      <div class="rcol">
+        <button class="rpick" id="rFrom"><span>จุดที่คุณยืน</span></button>
+        <button class="rpick" id="rTo"><span class="ph">เลือกร้านปลายทาง</span></button>
+      </div>
+      <button class="rswap" id="rSwap" aria-label="สลับต้นทางปลายทาง">⇅</button>
+    </div>
+    <div class="dway" id="dWay"></div>
+    <button class="dgo" id="dSteps">เริ่มนำทาง</button>
   </section>
 
   <section class="rpanel" id="rPanel" aria-live="polite">
@@ -1660,7 +1704,8 @@ function select(s, fromMap){
    ================================================================== */
 function openSteps(){
   if(!plan || !plan.steps.length) return;
-  stepAt=0; $("rPanel").className="rpanel"; $("stage").className="stage navi";
+  stepAt=0; $("rPanel").className="rpanel"; $("rDlg").className="rdlg"; $("veil").className="veil";
+  $("stage").className="stage navi";
   $("detail").className="detail";
   showStep(); $("steps").className="steps on"; resize(); kick();
 }
@@ -1755,24 +1800,35 @@ function scrollToCard(s){
     }
   }
 }
-/* อัปเดตแถบนำทางให้ตรงกับสถานะปัจจุบัน
+/* อัปเดตช่องนำทางทั้งใน popup และท้ายแผงร้าน ให้ตรงกับสถานะปัจจุบัน
    เรียกทุกครั้งที่ต้นทางหรือปลายทางเปลี่ยน จะได้ไม่มีจุดไหนลืมอัปเดต */
 function syncBar(){
   var f=$("rFrom").children[0], t=$("rTo").children[0];
   f.textContent = origin ? (origin.name+" · ชั้น "+origin.lvl) : "จุดที่คุณยืน";
-  f.className = "";
-  if(selected){ t.textContent = selected.name+" · ชั้น "+selected.lvl; t.className=""; }
-  else { t.textContent = "เลือกร้านปลายทาง"; t.className="ph"; }
+  f.className="";
+  if(selected){ t.textContent=selected.name+" · ชั้น "+selected.lvl; t.className=""; }
+  else { t.textContent="เลือกร้านปลายทาง"; t.className="ph"; }
   $("rSwap").disabled = !origin || !selected;
   $("dWay").innerHTML = legNote || "";
-  $("dSteps").style.display = plan ? "" : "none";
-  /* ปุ่มกับสรุปโผล่เมื่อมีปลายทางแล้วเท่านั้น ตอนยังไม่เลือกจะยุบเหลือแค่สองช่อง */
-  $("navBar").className = (selected && plan) ? "navbar ready" : "navbar";
+  $("dWay2").innerHTML = legNote || "";
+  var can = !!(selected && plan);
+  $("dSteps").style.display = can ? "" : "none";
+  $("dGo2").style.display = can ? "" : "none";
+  $("dFrom").textContent = origin ? "เปลี่ยนต้นทาง" : "ตั้งต้นทาง";
+}
+function openDlg(){
+  $("veil").className="veil on"; $("rDlg").className="rdlg on";
+  $("detail").className="detail"; syncBar(); kick();
+}
+function closeDlg(){
+  $("veil").className="veil"; $("rDlg").className="rdlg";
+  if(selected) $("detail").className="detail on";
+  kick();
 }
 
 function deselect(){
   selected=null; route=null; walker=null; plan=null; origin=null; pickingFrom=false; stepAt=0;
-  $("rPanel").className="rpanel";
+  $("rPanel").className="rpanel"; $("rDlg").className="rdlg"; $("veil").className="veil";
   $("steps").className="steps"; $("fCard").className="fcard"; $("stage").className="stage"; resize();
   legNote=""; syncBar();
   $("detail").className="detail"; flyHome(); renderGrid(); kick();
@@ -1907,12 +1963,13 @@ function applyPick(s){
   closePicker();
   if(rpFor==="from"){
     origin=s;
+    if(selected){ select(selected); if($("rDlg").className.indexOf("on")>=0) $("detail").className="detail"; }
     syncBar();
-    if(selected) select(selected);
-    else if(s) toast("ตั้งต้นทางแล้ว · เลือกร้านปลายทางต่อ");
+    if(!selected && s) toast("ตั้งต้นทางแล้ว · เลือกร้านปลายทางต่อ");
   } else {
     if(!s) return;
     select(s);
+    closeDlg();
   }
 }
 function swapEnds(){
@@ -1996,6 +2053,11 @@ $("sClose").addEventListener("click", closeSteps);
 })();
 $("sPrev").addEventListener("click", function(){ if(stepAt>0){ stepAt--; showStep(); kick(); } });
 $("sNext").addEventListener("click", function(){ if(stepAt<plan.steps.length-1){ stepAt++; showStep(); kick(); } });
+$("navBtn").addEventListener("click", openDlg);
+$("rdClose").addEventListener("click", closeDlg);
+$("veil").addEventListener("click", closeDlg);
+$("dFrom").addEventListener("click", function(){ openDlg(); openPicker("from"); });
+$("dGo2").addEventListener("click", openSteps);
 $("rFrom").addEventListener("click", function(){ openPicker("from"); });
 $("rTo").addEventListener("click", function(){ openPicker("to"); });
 $("rSwap").addEventListener("click", swapEnds);
@@ -2026,7 +2088,7 @@ function kick(){
     idleSpin=true; $("hint").className="hint gone";
     if(selected) deselect();
     $("steps").className="steps"; $("fCard").className="fcard";
-    $("rPanel").className="rpanel";
+    $("rPanel").className="rpanel"; $("rDlg").className="rdlg"; $("veil").className="veil";
     $("stage").className="stage"; pickingFrom=false; origin=null;
     $("q").value=""; query=""; cat=""; $("qclear").className="qclear";
     if(cur.lvl!==FLOORS[0].lvl) setFloor(FLOORS[0].lvl);
